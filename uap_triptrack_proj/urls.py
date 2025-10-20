@@ -12,6 +12,8 @@ urlpatterns = [
     path('tours/', include('tours.urls', namespace='tours')),
     path('payments/', include('payments.urls', namespace='payments')),
     path('developer/', include('developer_dashboard.urls', namespace='developer')),
+    path('organizer/', include('organizer_dashboard.urls', namespace='organizer_dashboard')),
+
 ]
 
 if settings.DEBUG:

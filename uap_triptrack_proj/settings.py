@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'tours',
     'payments',
     'developer_dashboard',
+    'organizer_dashboard',
     # 3rd party
     'widget_tweaks',
 ]
