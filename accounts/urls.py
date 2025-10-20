@@ -1,10 +1,12 @@
 from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
+from .views import CustomLoginView
 from . import views
 
 app_name = 'accounts'
 
 urlpatterns = [
+    path('login/', CustomLoginView.as_view(), name='login'),
     # User Authentication
     path('signup/', views.signup_view, name='signup'),
     path('login/', auth_views.LoginView.as_view(

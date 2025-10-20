@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Organizer Dashboard</h2>
+<a href="{% url 'organizer_dashboard:create_tour' %}">Create New Tour</a>
+<hr>
+<h3>Your Tours</h3>
+<ul>
+    {% for tour in tours %}
+        <li>
+            {{ tour.title }} - {{ tour.location }} - {{ tour.tour_date }} - Fee: {{ tour.fee }}
+        </li>
+    {% empty %}
+        <li>No tours created yet.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

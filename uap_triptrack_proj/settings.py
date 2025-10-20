@@ -70,7 +70,8 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'accounts.User'  # custom user model
+#AUTH_USER_MODEL = 'accounts.User'  # custom user model
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # static & media
 STATIC_URL = '/static/'
@@ -88,5 +89,6 @@ AUTH_PASSWORD_VALIDATORS = [
     # we will implement custom validator in accounts/validators.py and register here if wanted
 ]
 
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
+# settings.py
+LOGIN_REDIRECT_URL = '/dashboard/'  # or default organizer page
+LOGOUT_REDIRECT_URL = '/accounts/login/'

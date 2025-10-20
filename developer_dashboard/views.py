@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
 from django.contrib import messages
 from tours.models import Tour, Booking
-from accounts.models import User
+from accounts.models import CustomUser
 
 # Decorator to restrict access to developers only
 def developer_required(view_func):
@@ -18,7 +18,7 @@ def developer_required(view_func):
 @developer_required
 def dashboard(request):
     tours = Tour.objects.all().order_by('-created_at')
-    users = User.objects.all()
+    users = CustomUser.objects.all()
     bookings = Booking.objects.all().order_by('-created_at')[:20]  # latest 20 bookings
     context = {
         'tours': tours,

@@ -1,9 +1,10 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, PasswordResetForm, SetPasswordForm
-from .models import User
+from django.contrib.auth.forms import UserCreationForm
+from .models import CustomUser
 import re
 from django.core.exceptions import ValidationError
 
+# Password complexity validator
 def validate_password_complexity(value):
     if len(value) < 8 or len(value) > 12:
         raise ValidationError("Password must be between 8 and 12 characters.")
@@ -17,17 +18,25 @@ def validate_password_complexity(value):
         raise ValidationError("Password must contain at least one special character.")
 
 class SignUpForm(UserCreationForm):
-    role = forms.ChoiceField(choices=[(User.TOURIST,'Tourist'),(User.ORGANIZER,'Tour Organizer')], widget=forms.Select)
+    role = forms.ChoiceField(
+        choices=[
+            (CustomUser.TOURIST, 'Tourist'),
+            (CustomUser.ORGANIZER, 'Tour Organizer'),
+            (CustomUser.DEVELOPER, 'Developer')
+        ],
+        widget=forms.Select
+    )
     email = forms.EmailField(required=True)
     password1 = forms.CharField(widget=forms.PasswordInput, validators=[validate_password_complexity])
     password2 = forms.CharField(widget=forms.PasswordInput)
 
     class Meta:
-        model = User
-        fields = ('username','email','role','phone','password1','password2','first_name','last_name')
+        model = CustomUser
+        fields = ('username', 'email', 'role', 'phone', 'avatar', 'password1', 'password2', 'first_name', 'last_name')
 
+    # Ensure unique email
     def clean_email(self):
         email = self.cleaned_data['email'].lower()
-        if User.objects.filter(email=email).exists():
+        if CustomUser.objects.filter(email=email).exists():
             raise forms.ValidationError("Email already in use.")
         return email
