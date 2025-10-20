@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <h2>{{ tour.title }}</h2>
+    <p>{{ tour.description|linebreaks }}</p>
+    <p><strong>Location:</strong> {{ tour.location }}</p>
+    <p><strong>Date:</strong> <span id="tour-date" data-date="{{ tour.date|date:'Y-m-d H:i:s' }}">{{ tour.date|date:"M d, Y H:i" }}</span></p>
+    <p><strong>Price:</strong> ৳{{ tour.price }}</p>
+    <p><strong>Spots left:</strong> {{ tour.spots_left }}</p>
+
+    {% if user.is_authenticated and user.is_tourist %}
+      <a href="{% url 'tours:book' tour.id %}" class="btn btn-success">Book Now</a>
+      <a href="{% url 'tours:wishlist_add' tour.id %}" class="btn btn-outline-secondary">Add to Wishlist</a>
+    {% endif %}
+
+    <hr>
+    <h5>Reviews</h5>
+    {% for r in reviews %}
+      <div><strong>{{ r.tourist.username }}</strong> — {{ r.rating }} / 5 <p>{{ r.comment }}</p></div>
+    {% empty %}
+      <p>No reviews yet.</p>
+    {% endfor %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card p-3 text-center">
+      <h6>Emergency Contact</h6>
+      <p>{{ tour.emergency_contact }}</p>
+      <h6>QR</h6>
+      {% if tour.qr_image %}
+        <img src="{{ tour.qr_image.url }}" alt="QR" class="img-fluid">
+        <p class="small">Scan to open this tour (public view).</p>
+      {% endif %}
+    </div>
+
+    <div class="card mt-3 p-3">
+      <h6>Countdown</h6>
+      <div id="countdown"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // countdown using the data-date attribute
+  (function(){
+    const dateStr = document.getElementById('tour-date').dataset.date;
+    const target = new Date(dateStr.replace(' ','T'));
+    const out = document.getElementById('countdown');
+    function tick(){
+      const now = new Date();
+      const diff = target - now;
+      if(diff<=0){ out.innerText = 'Started'; return; }
+      const days = Math.floor(diff/1000/60/60/24);
+      const hours = Math.floor(diff/1000/60/60)%24;
+      const mins = Math.floor(diff/1000/60)%60;
+      const secs = Math.floor(diff/1000)%60;
+      out.innerText = `${days}d ${hours}h ${mins}m ${secs}s`;
+    }
+    setInterval(tick, 1000);
+    tick();
+  })();
+</script>
+{% endblock %}

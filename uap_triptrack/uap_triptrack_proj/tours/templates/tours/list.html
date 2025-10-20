@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>All Tours</h2>
+{% for tour in tours %}
+    <div style="border:1px solid #ccc; padding:10px; margin:10px;">
+        <h3>{{ tour.title }}</h3>
+        <p>{{ tour.description }}</p>
+        <p><strong>Date:</strong> {{ tour.date }}</p>
+        <p><strong>Location:</strong> {{ tour.location }}</p>
+    </div>
+{% empty %}
+    <p>No tours available.</p>
+{% endfor %}
+{% endblock %}

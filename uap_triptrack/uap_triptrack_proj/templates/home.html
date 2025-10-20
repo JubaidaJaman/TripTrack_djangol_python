@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="jumbotron py-5 text-center">
+  <h1>UAP TripTrack</h1>
+  <p class="lead">Find & manage university tours. For tourists and organizers.</p>
+  <a href="{% url 'accounts:signup' %}" class="btn btn-lg btn-primary">Get Started</a>
+</div>
+
+<h3>Upcoming Tours</h3>
+<div class="row">
+  {% for tour in upcoming %}
+    <div class="col-md-4">
+      <div class="card mb-3 shadow-sm">
+        {% if tour.image %}
+          <img src="{{ tour.image.url }}" class="card-img-top" style="height:180px; object-fit:cover;">
+        {% endif %}
+        <div class="card-body">
+          <h5 class="card-title">{{ tour.title }}</h5>
+          <p class="card-text">{{ tour.location }} — {{ tour.date|date:"M d, Y H:i" }}</p>
+          <a href="{% url 'tours:detail' tour.id %}" class="btn btn-outline-primary btn-sm">View</a>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <p>No upcoming tours yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}
