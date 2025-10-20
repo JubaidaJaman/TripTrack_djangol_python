@@ -62,6 +62,18 @@
         opacity: 0.9;
         transform: translateY(-2px);
     }
+    .forgot-password {
+        margin-top: 12px;
+        display: block;
+        font-size: 14px;
+        color: #84fab0;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .forgot-password:hover {
+        text-decoration: underline;
+        color: #8fd3f4;
+    }
     .footer-text {
         margin-top: 20px;
         color: #666;
@@ -77,6 +89,8 @@
             {{ form.as_p }}
             <button type="submit">Login</button>
         </form>
+        <!-- Namespace added for password reset -->
+        <a href="{% url 'accounts:password_reset' %}" class="forgot-password">Forgot Password?</a>
         <p class="footer-text">
             © 2025 TripTrack | Secure User Portal
         </p>
