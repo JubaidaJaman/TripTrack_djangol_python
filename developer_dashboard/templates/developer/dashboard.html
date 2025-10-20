@@ -1,0 +1,32 @@
+<h1>Developer Dashboard</h1>
+
+<h2>Tours</h2>
+{% for tour in tours %}
+  <div>
+    {{ tour.name }} - {{ tour.date }}
+    {% if tour.active %}
+      <span>Active</span>
+    {% else %}
+      <span>Inactive</span>
+    {% endif %}
+    <a href="{% url 'developer:tour_toggle_active' tour.pk %}">Toggle Active</a>
+  </div>
+{% empty %}
+  No tours yet.
+{% endfor %}
+
+<h2>Users</h2>
+{% for u in users %}
+  <div>{{ u.username }} - {{ u.email }} - {{ u.role }}</div>
+{% empty %}
+  No users yet.
+{% endfor %}
+
+<h2>Bookings</h2>
+{% for booking in bookings %}
+  <div>{{ booking.user.username }} booked {{ booking.tour.name }}</div>
+{% empty %}
+  No bookings yet.
+{% endfor %}
+
+<a href="{% url 'developer:logout' %}">Logout</a>

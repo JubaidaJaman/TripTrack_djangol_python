@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card p-4">
+  <h4>Checkout — {{ booking.tour.title }}</h4>
+  <p>Amount: ৳{{ booking.tour.price }}</p>
+  <form method="post">{% csrf_token %}
+    <div class="mb-3">
+      <label>Select payment method</label>
+      <select name="method" class="form-select">
+        <option value="bkash">bKash</option>
+        <option value="nagad">Nagad</option>
+      </select>
+    </div>
+    <button class="btn btn-primary">Pay Now</button>
+  </form>
+</div>
+{% endblock %}

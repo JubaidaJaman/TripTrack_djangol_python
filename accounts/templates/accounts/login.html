@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    body {
+        background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+        font-family: "Poppins", sans-serif;
+    }
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 90vh;
+    }
+    .login-box {
+        background-color: #ffffff;
+        padding: 40px 50px;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+    }
+    .login-box h2 {
+        margin-bottom: 25px;
+        color: #333;
+        font-weight: 600;
+    }
+    form p {
+        text-align: left;
+        color: #555;
+        font-size: 15px;
+    }
+    input[type="text"],
+    input[type="password"] {
+        width: 100%;
+        padding: 10px 12px;
+        margin-top: 8px;
+        margin-bottom: 18px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+        border-color: #84fab0;
+        box-shadow: 0 0 6px rgba(132, 250, 176, 0.6);
+        outline: none;
+    }
+    button {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        color: white;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+    }
+    button:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    .footer-text {
+        margin-top: 20px;
+        color: #666;
+        font-size: 14px;
+    }
+</style>
+
+<div class="login-container">
+    <div class="login-box">
+        <h2>User Login</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Login</button>
+        </form>
+        <p class="footer-text">
+            © 2025 TripTrack | Secure User Portal
+        </p>
+    </div>
+</div>
+{% endblock %}
