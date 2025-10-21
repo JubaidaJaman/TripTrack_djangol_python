@@ -1,0 +1,12 @@
+<!-- tourist_dashboard/templates/tourist_dashboard/edit_profile.html -->
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+{% block content %}
+<div style="max-width:640px;margin:16px auto;padding:12px;">
+  <h1>Edit Profile</h1>
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+  </form>
+</div>
+{% endblock %}

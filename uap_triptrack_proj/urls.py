@@ -13,6 +13,7 @@ urlpatterns = [
     path('payments/', include('payments.urls', namespace='payments')),
     path('developer/', include('developer_dashboard.urls', namespace='developer')),
     path('organizer/', include('organizer_dashboard.urls', namespace='organizer_dashboard')),
+    path('tourist/', include('tourist_dashboard.urls', namespace='tourist_dashboard')),
 
 ]
 

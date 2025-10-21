@@ -1,0 +1,18 @@
+<!-- tourist_dashboard/templates/tourist_dashboard/booking_detail.html -->
+{% extends "base.html" %}
+{% block title %}Booking details{% endblock %}
+{% block content %}
+<div style="max-width:800px;margin:16px auto;padding:12px;">
+  <a href="{% url 'tourist_dashboard:dashboard' %}">← Back</a>
+  <h1>Booking #{{ booking.id }}</h1>
+
+  <div style="border:1px solid #e5e7eb;padding:12px;border-radius:6px;">
+    <h2>{{ booking.tour.title|default:"Tour" }}</h2>
+    <p><strong>Start:</strong> {{ booking.start_date|default:"-" }}</p>
+    <p><strong>End:</strong> {{ booking.end_date|default:"-" }}</p>
+    <p><strong>Status:</strong> {{ booking.get_status_display|default:booking.status }}</p>
+    <p><strong>Total:</strong> ৳{{ booking.total_price|default:"-" }}</p>
+    <p><small>Booked on: {{ booking.booking_date|date:"F j, Y, g:i a" }}</small></p>
+  </div>
+</div>
+{% endblock %}
