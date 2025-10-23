@@ -11,7 +11,8 @@ urlpatterns = [
     #path('accounts/', include('accounts.urls', namespace='accounts')),
     path('tours/', include('tours.urls', namespace='tours')),
     path('payments/', include('payments.urls', namespace='payments')),
-    path('', include('accounts.urls')),
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+
     path('developer/', include('developer_dashboard.urls')),
     path('organizer/', include('organizer_dashboard.urls')),
     path('tourist/', include('tourist_dashboard.urls')),

@@ -1,32 +1,42 @@
-<h1>Developer Dashboard</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 font-sans">
 
-<h2>Tours</h2>
-{% for tour in tours %}
-  <div>
-    {{ tour.name }} - {{ tour.date }}
-    {% if tour.active %}
-      <span>Active</span>
-    {% else %}
-      <span>Inactive</span>
-    {% endif %}
-    <a href="{% url 'developer:tour_toggle_active' tour.pk %}">Toggle Active</a>
-  </div>
-{% empty %}
-  No tours yet.
-{% endfor %}
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Developer Dashboard</h1>
+            <a href="{% url 'accounts:logout' %}" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">Logout</a>
+        </div>
+    </header>
 
-<h2>Users</h2>
-{% for u in users %}
-  <div>{{ u.username }} - {{ u.email }} - {{ u.role }}</div>
-{% empty %}
-  No users yet.
-{% endfor %}
+    <!-- Main Content -->
+    <main class="container mx-auto mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
 
-<h2>Bookings</h2>
-{% for booking in bookings %}
-  <div>{{ booking.user.username }} booked {{ booking.tour.name }}</div>
-{% empty %}
-  No bookings yet.
-{% endfor %}
+        <!-- Organizer News Card -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 text-blue-600">Organizer News</h2>
+            <p class="text-gray-700">{{ organizer_news }}</p>
+        </div>
 
-<a href="{% url 'developer:logout' %}">Logout</a>
+        <!-- Tour News Card -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4 text-green-600">Tour News</h2>
+            <p class="text-gray-700">{{ tour_news }}</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white p-4 mt-8 text-center">
+        &copy; 2025 TripTrack | All rights reserved.
+    </footer>
+
+</body>
+</html>
