@@ -1,17 +1,23 @@
 {% extends 'base.html' %}
-
 {% block content %}
-<h2>Organizer Dashboard</h2>
-<a href="{% url 'organizer_dashboard:create_tour' %}">Create New Tour</a>
-<hr>
-<h3>Your Tours</h3>
+<h1>Organizer Dashboard</h1>
+<p>Welcome, {{ request.user.username }}</p>
+<a href="{% url 'organizer_create_tour' %}">Create new tour</a>
+
 <ul>
-    {% for tour in tours %}
-        <li>
-            {{ tour.title }} - {{ tour.location }} - {{ tour.tour_date }} - Fee: {{ tour.fee }}
-        </li>
-    {% empty %}
-        <li>No tours created yet.</li>
-    {% endfor %}
+  {% for tour in tours %}
+    <li style="margin-bottom:12px;">
+      <strong>{{ tour.title }}</strong> — {{ tour.location }}<br>
+      Seats: {{ tour.available_seats }}/{{ tour.total_seats }} | Starts: {{ tour.start_date }}
+      <div>
+        <a href="{% url 'organizer_edit_tour' tour.pk %}">Edit</a> |
+        <form action="{% url 'organizer_delete_tour' tour.pk %}" method="post" style="display:inline;">{% csrf_token %}
+            <button type="submit" onclick="return confirm('Delete this tour?');">Delete</button>
+        </form>
+      </div>
+    </li>
+  {% empty %}
+    <li>No tours created yet.</li>
+  {% endfor %}
 </ul>
 {% endblock %}

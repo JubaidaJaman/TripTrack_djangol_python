@@ -2,29 +2,17 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 class CustomUser(AbstractUser):
-    TOURIST = 'TOURIST'
-    ORGANIZER = 'ORGANIZER'
-    DEVELOPER = 'DEVELOPER'
+    ROLE_CHOICES = (
+        ('developer', 'Developer'),
+        ('organizer', 'Organizer'),
+        ('tourist', 'Tourist'),
+    )
 
-    ROLE_CHOICES = [
-        (TOURIST, 'Tourist'),
-        (ORGANIZER, 'Tour Organizer'),
-        (DEVELOPER, 'Developer'),
-    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='tourist')
+    phone = models.CharField(max_length=30, blank=True, null=True)
+    city = models.CharField(max_length=120, blank=True, null=True)
+    organization_name = models.CharField(max_length=200, blank=True, null=True)
+    organization_description = models.TextField(blank=True, null=True)
 
-
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=TOURIST)
-
-    # extra profile fields
-    phone = models.CharField(max_length=20, blank=True, null=True)
-    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
-
-    # helper methods
-    def is_tourist(self):
-        return self.role == self.TOURIST
-
-    def is_organizer(self):
-        return self.role == self.ORGANIZER
-
-    def is_developer(self):
-        return self.role == self.DEVELOPER
+    def __str__(self):
+        return f"{self.username} ({self.role})"

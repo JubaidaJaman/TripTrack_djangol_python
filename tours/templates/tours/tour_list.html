@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tour List</title>
+</head>
+<body>
+    <h1>Available Tours</h1>
+    <ul>
+        {% for tour in tours %}
+            <li>
+                <strong>{{ tour.title }}</strong> - {{ tour.start_date }} to {{ tour.end_date }}<br>
+                Location: {{ tour.location }}<br>
+                Price per person: {{ tour.price_per_person }}
+            </li>
+        {% empty %}
+            <li>No tours available.</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

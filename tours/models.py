@@ -1,76 +1,52 @@
-import uuid
+# tours/models.py
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
-import qrcode
-from io import BytesIO
-from django.core.files.base import ContentFile
-
-User = settings.AUTH_USER_MODEL
 
 class Tour(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     organizer = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='organized_tours')
-    title = models.CharField(max_length=250)
+    title = models.CharField(max_length=255)
     description = models.TextField()
-    location = models.CharField(max_length=250)
-    date = models.DateTimeField()
-    capacity = models.PositiveIntegerField(default=20)
-    price = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    location = models.CharField(max_length=255)
+    emergency_contact = models.CharField(max_length=50, blank=True, null=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    total_seats = models.PositiveIntegerField(default=0)
+    available_seats = models.PositiveIntegerField(default=0)
+    price_per_person = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    cover_image = models.ImageField(upload_to='tour_covers/', null=True, blank=True)
+    published = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    image = models.ImageField(upload_to='tour_images/', blank=True, null=True)
-    emergency_contact = models.CharField(max_length=100, blank=True, null=True)
-
-    qr_image = models.ImageField(upload_to='qrcodes/', blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
-        # generate QR code with URL to tour detail
+        if not self.pk and self.available_seats == 0:
+            self.available_seats = self.total_seats
         super().save(*args, **kwargs)
-        if not self.qr_image:
-            tour_url = f"/tours/{self.id}/qr-detail/"  # local url; adjust to full domain if needed
-            qr = qrcode.make(tour_url)
-            buffer = BytesIO()
-            qr.save(buffer, format='PNG')
-            filename = f"{self.id}.png"
-            self.qr_image.save(filename, ContentFile(buffer.getvalue()), save=False)
-            buffer.close()
-            super().save(*args, **kwargs)
 
-    def spots_left(self):
-        booked = Booking.objects.filter(tour=self, status='CONFIRMED').count()
-        return max(0, self.capacity - booked)
+    def __str__(self):
+        return self.title
 
-    def is_past(self):
-        return self.date < timezone.now()
 
 class Booking(models.Model):
-    PENDING = 'PENDING'
-    CONFIRMED = 'CONFIRMED'
-    CANCELLED = 'CANCELLED'
-    STATUS_CHOICES = [(PENDING,'Pending'), (CONFIRMED,'Confirmed'), (CANCELLED,'Cancelled')]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
+    booked_on = models.DateTimeField(auto_now_add=True)
 
-    id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
-    tourist = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
-    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='bookings')
-    created_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=PENDING)
-    payment_status = models.BooleanField(default=False)
-    check_in = models.BooleanField(default=False)
 
 class Wishlist(models.Model):
-    tourist = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='wishlist')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
+
 
 class Review(models.Model):
-    tourist = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='reviews')
-    rating = models.IntegerField(default=5)
-    comment = models.TextField(blank=True, null=True)
-    created = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
+    rating = models.IntegerField()
+    comment = models.TextField()
+
 
 class Message(models.Model):
-    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
-    tour = models.ForeignKey(Tour, on_delete=models.CASCADE, related_name='messages')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    tour = models.ForeignKey(Tour, on_delete=models.CASCADE)
     content = models.TextField()
-    created = models.DateTimeField(auto_now_add=True)
+    sent_at = models.DateTimeField(auto_now_add=True)

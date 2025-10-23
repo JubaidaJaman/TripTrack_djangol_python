@@ -8,13 +8,13 @@ urlpatterns = [
     # DO NOT include Django admin site per your requirement; if you still want it, add it intentionally.
     # path('admin/', admin.site.urls),
     path('', account_views.home, name='home'),
-    path('accounts/', include('accounts.urls', namespace='accounts')),
+    #path('accounts/', include('accounts.urls', namespace='accounts')),
     path('tours/', include('tours.urls', namespace='tours')),
     path('payments/', include('payments.urls', namespace='payments')),
-    path('developer/', include('developer_dashboard.urls', namespace='developer')),
-    path('organizer/', include('organizer_dashboard.urls', namespace='organizer_dashboard')),
-    path('tourist/', include('tourist_dashboard.urls', namespace='tourist_dashboard')),
-
+    path('', include('accounts.urls')),
+    path('developer/', include('developer_dashboard.urls')),
+    path('organizer/', include('organizer_dashboard.urls')),
+    path('tourist/', include('tourist_dashboard.urls')),
 ]
 
 if settings.DEBUG:

@@ -6,8 +6,9 @@ from django.utils import timezone
 from django.contrib import messages
 
 def tour_list(request):
-    tours = Tour.objects.filter(date__gte=timezone.now()).order_by('date')
-    return render(request, 'tours/list.html', {'tours': tours})
+    # Use start_date instead of date
+    tours = Tour.objects.filter(start_date__gte=timezone.now()).order_by('start_date')
+    return render(request, 'tours/tour_list.html', {'tours': tours})
 
 def tour_detail(request, pk):
     tour = get_object_or_404(Tour, pk=pk)

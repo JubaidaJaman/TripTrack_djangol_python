@@ -1,8 +1,18 @@
+# tours/forms.py
 from django import forms
 from .models import Tour
 
 class TourForm(forms.ModelForm):
-    date = forms.DateTimeField(widget=forms.DateTimeInput(attrs={'type':'datetime-local'}))
     class Meta:
         model = Tour
-        fields = ['title','description','location','date','capacity','price','image','emergency_contact']
+        fields = [
+            'title',
+            'description',
+            'location',
+            'start_date',
+            'end_date',
+            'total_seats',
+            'price_per_person',
+            'cover_image',
+            'emergency_contact'
+        ]

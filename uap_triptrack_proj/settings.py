@@ -19,21 +19,24 @@ SECRET_KEY = 'replace-with-your-secret-key'
 DEBUG = True
 ALLOWED_HOSTS = []
 
-INSTALLED_APPS = [
 
+INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # local apps
+
+    # Your apps
     'accounts',
-    'tours',
-    'payments',
     'developer_dashboard',
     'organizer_dashboard',
-    'tourist_dashboard'
-    # 3rd party
+    'tourist_dashboard',
+    'tours',
+    'payments',
+
+    # Optional
     'widget_tweaks',
 ]
 
@@ -71,8 +74,6 @@ DATABASES = {
     }
 }
 
-#AUTH_USER_MODEL = 'accounts.User'  # custom user model
-AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # static & media
 STATIC_URL = '/static/'
@@ -91,5 +92,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # settings.py
-LOGIN_REDIRECT_URL = '/dashboard/'  # or default organizer page
+AUTH_USER_MODEL = 'accounts.CustomUser'
+
+LOGIN_REDIRECT_URL = '/dashboard/'  # or default page after login
 LOGOUT_REDIRECT_URL = '/accounts/login/'

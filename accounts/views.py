@@ -1,62 +1,46 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.views import LoginView
-from .forms import SignUpForm
-from django.contrib import messages
-from .models import CustomUser
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetConfirmView, PasswordResetCompleteView
-from django.urls import reverse_lazy
-from django.utils import timezone
-from tours.models import Tour
-
-class CustomLoginView(LoginView):
-    template_name = 'accounts/login.html'
-
-    def get_success_url(self):
-        user = self.request.user
-        if user.is_organizer:
-            return '/organizer/'  # organizer dashboard URL
-        elif user.is_developer:
-            return '/developer/'  # developer dashboard URL
-        else:
-            return '/'  # fallback
+from .forms import SignUpForm, LoginForm
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse
 
 def home(request):
-    # homepage view will be in project-level templates; import tours to show upcoming events via context processors or call model
-    from tours.models import Tour
-    upcoming = Tour.objects.filter(date__gte=timezone.now()).order_by('date')[:6]
-    return render(request, 'home.html', {'upcoming': upcoming})
+    return render(request, 'home.html')
 
 def signup_view(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            # set role provided by user in form
-            user.role = form.cleaned_data['role']
-            user.username = form.cleaned_data['username']
-            user.email = form.cleaned_data['email']
-            user.save()
-            messages.success(request, "Account created. Please login.")
-            return redirect('accounts:login')
+            user = form.save()
+            login(request, user)
+            # Redirect based on role
+            if user.role == 'organizer':
+                return redirect('organizer_dashboard:dashboard')
+            elif user.role == 'tourist':
+                return redirect('tourist_dashboard:dashboard')
+            else:
+                return redirect('developer_dashboard:dashboard')
     else:
         form = SignUpForm()
     return render(request, 'accounts/signup.html', {'form': form})
 
-# developer login view (separate)
-from django.contrib.auth.forms import AuthenticationForm
-def developer_login(request):
+def login_view(request):
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = LoginForm(data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            if user.is_developer():
-                login(request, user)
-                return redirect('developer:dashboard')
+            login(request, user)
+            if user.role == 'organizer':
+                return redirect('organizer_dashboard:dashboard')
+            elif user.role == 'tourist':
+                return redirect('tourist_dashboard:dashboard')
             else:
-                messages.error(request, "Not a developer.")
+                return redirect('developer_dashboard:dashboard')
     else:
-        form = AuthenticationForm()
-    return render(request, 'accounts/developer_login.html', {'form': form})
+        form = LoginForm()
+    return render(request, 'accounts/login.html', {'form': form})
 
-# Use Django default login/logout (we'll add urls)
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect('accounts:login')
