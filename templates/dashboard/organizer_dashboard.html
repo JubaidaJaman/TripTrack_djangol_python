@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-briefcase fa-3x text-warning mb-3"></i>
+                    <h5>{{ user.username }}</h5>
+                    <span class="badge bg-warning">Organizer</span>
+                    <p class="text-muted mt-2 mb-0">{{ organizer_profile.department }}</p>
+                    <div class="mt-3">
+                        <a href="{% url 'profile' %}" class="btn btn-outline-primary btn-sm w-100">Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0">Business Overview</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Tours:</span>
+                        <strong>{{ total_tours }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Bookings:</span>
+                        <strong>{{ total_bookings }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Revenue:</span>
+                        <strong>{{ total_revenue }} ৳</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Active Tours:</span>
+                        <strong>{{ tours.count }}</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <a href="{% url 'create_tour' %}" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-plus me-2"></i>Create New Tour
+                    </a>
+                    <a href="{% url 'tour_list' %}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-eye me-2"></i>Browse All Tours
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Welcome Card -->
+            <div class="card bg-light mb-4">
+                <div class="card-body">
+                    <h4 class="card-title">Welcome, {{ organizer_profile.department }} Organizer! 🎯</h4>
+                    <p class="card-text">Manage your tours, track bookings, and grow your UAP tour business.</p>
+                </div>
+            </div>
+
+            <!-- My Tours -->
+            <div class="card">
+                <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-map-marked-alt me-2"></i>My Tours</h5>
+                    <span class="badge bg-light text-dark">{{ total_tours }} tours</span>
+                </div>
+                <div class="card-body">
+                    {% if tours %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tour Title</th>
+                                    <th>Category</th>
+                                    <th>Date</th>
+                                    <th>Price</th>
+                                    <th>Spots</th>
+                                    <th>Status</th>
+                                    <th>Bookings</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tour in tours %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ tour.title }}</strong>
+                                        {% if tour.image %}
+                                        <br><small class="text-muted">Has image</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ tour.get_category_display }}</span>
+                                    </td>
+                                    <td>{{ tour.tour_date|date:"M d, Y" }}</td>
+                                    <td class="price-taka">
+                                        {% if tour.price == 0 %}
+                                            FREE
+                                        {% else %}
+                                            {{ tour.price }} ৳
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ tour.available_spots }}/{{ tour.max_participants }}
+                                        {% if tour.max_participants > 0 %}
+                                        <div class="progress" style="height: 5px;">
+                                            <div class="progress-bar bg-success" 
+                                                 style="width: {% widthratio tour.max_participants tour.max_participants|add:"-tour.available_spots" 100 %}%">
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{% if tour.status == 'published' %}success{% elif tour.status == 'draft' %}secondary{% else %}danger{% endif %}">
+                                            {{ tour.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ tour.booking_set.count }}</strong>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'tour_detail' tour.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No tours created yet</h5>
+                        <p class="text-muted">Start creating amazing tours for UAP students and visitors!</p>
+                        <a href="{% url 'create_tour' %}" class="btn btn-warning">Create Your First Tour</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Recent Bookings -->
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Recent Bookings</h5>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Tourist</th>
+                                    <th>Tour</th>
+                                    <th>Date</th>
+                                    <th>Participants</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in bookings|slice:":5" %}
+                                <tr>
+                                    <td>{{ booking.tourist.username }}</td>
+                                    <td>{{ booking.tour.title }}</td>
+                                    <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                                    <td>{{ booking.participants }}</td>
+                                    <td class="price-taka">{{ booking.total_price }} ৳</td>
+                                    <td>
+                                        <span class="badge bg-{% if booking.status == 'confirmed' %}success{% else %}warning{% endif %}">
+                                            {{ booking.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">No bookings yet. Promote your tours to get more bookings!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Stats Cards -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="card text-white bg-primary">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ total_tours }}</h4>
+                                    <p>Total Tours</p>
+                                </div>
+                                <i class="fas fa-map-marked-alt fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-success">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ total_bookings }}</h4>
+                                    <p>Total Bookings</p>
+                                </div>
+                                <i class="fas fa-calendar-check fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-white bg-warning">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4>{{ total_revenue }} ৳</h4>
+                                    <p>Total Revenue</p>
+                                </div>
+                                <i class="fas fa-dollar-sign fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

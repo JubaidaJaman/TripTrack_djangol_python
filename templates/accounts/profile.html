@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-user-edit me-2"></i>Edit Profile</h4>
+                </div>
+                <div class="card-body">
+                    <!-- User Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h5>Account Information</h5>
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th>Username:</th>
+                                    <td>{{ user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>User Type:</th>
+                                    <td>
+                                        <span class="badge bg-{% if user.user_type == 'developer' %}danger{% elif user.user_type == 'organizer' %}warning{% else %}info{% endif %}">
+                                            {{ user.get_user_type_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ user.phone|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Joined:</th>
+                                    <td>{{ user.date_joined|date:"M d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto" 
+                                 style="width: 100px; height: 100px;">
+                                <i class="fas fa-user fa-3x text-secondary"></i>
+                            </div>
+                            <div class="mt-3">
+                                <span class="badge bg-{% if user.user_type == 'developer' %}danger{% elif user.user_type == 'organizer' %}warning{% else %}info{% endif %}">
+                                    {{ user.get_user_type_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Form -->
+                    <h5 class="border-bottom pb-2">Profile Details</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if user.user_type == 'tourist' %}
+                        <!-- Tourist Profile Fields -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Student ID</label>
+                                    <input type="text" class="form-control" name="student_id" 
+                                           value="{{ form.instance.student_id|default:'' }}"
+                                           placeholder="Enter your student ID">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" name="department" 
+                                           value="{{ form.instance.department|default:'' }}"
+                                           placeholder="e.g., CSE, EEE, BBA">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Semester</label>
+                                    <input type="text" class="form-control" name="semester" 
+                                           value="{{ form.instance.semester|default:'' }}"
+                                           placeholder="e.g., Spring 2024">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" name="date_of_birth" 
+                                           value="{{ form.instance.date_of_birth|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <!-- Organizer Profile Fields -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" name="department" 
+                                           value="{{ form.instance.department|default:'' }}" required
+                                           placeholder="e.g., CSE Department">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Organizer ID</label>
+                                    <input type="text" class="form-control" name="organizer_id" 
+                                           value="{{ form.instance.organizer_id|default:'' }}"
+                                           placeholder="Your organizer ID">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Bio</label>
+                            <textarea class="form-control" name="bio" rows="4" 
+                                      placeholder="Tell us about yourself and your department...">{{ form.instance.bio|default:'' }}</textarea>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'dashboard' %}" class="btn btn-secondary me-md-2">Back to Dashboard</a>
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Account Statistics -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Account Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        {% if user.user_type == 'tourist' %}
+                        <div class="col-md-3">
+                            <h4>{{ user.booking_set.count }}</h4>
+                            <p class="text-muted">Bookings</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>{{ user.review_set.count }}</h4>
+                            <p class="text-muted">Reviews</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>{{ user.wishlist_set.count }}</h4>
+                            <p class="text-muted">Wishlist</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4>{{ user.touristprofile.department|default:"-" }}</h4>
+                            <p class="text-muted">Department</p>
+                        </div>
+
+                        {% elif user.user_type == 'organizer' %}
+                        <div class="col-md-4">
+                            <h4>{{ user.tour_set.count }}</h4>
+                            <p class="text-muted">Tours Created</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>{{ user.organizerprofile.department }}</h4>
+                            <p class="text-muted">Department</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>
+                                {% if user.organizerprofile.is_verified %}
+                                <i class="fas fa-check-circle text-success"></i>
+                                {% else %}
+                                <i class="fas fa-clock text-warning"></i>
+                                {% endif %}
+                            </h4>
+                            <p class="text-muted">Verification</p>
+                        </div>
+
+                        {% else %}
+                        <div class="col-12">
+                            <p class="text-muted">Developer account - Full system access</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

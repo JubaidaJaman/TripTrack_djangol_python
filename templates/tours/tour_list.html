@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filters</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get">
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label class="form-label">Search Tours</label>
+                            <input type="text" name="search" class="form-control" 
+                                   value="{{ request.GET.search }}" 
+                                   placeholder="Search tours...">
+                        </div>
+
+                        <!-- Category Filter -->
+                        <div class="mb-3">
+                            <label class="form-label">Tour Category</label>
+                            <select name="category" class="form-select">
+                                <option value="">All Categories</option>
+                                {% for category_value, category_name in categories %}
+                                <option value="{{ category_value }}" 
+                                        {% if request.GET.category == category_value %}selected{% endif %}>
+                                    {{ category_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Price Filter -->
+                        <div class="mb-3">
+                            <label class="form-label">Price Range</label>
+                            <select name="price_range" class="form-select">
+                                <option value="">Any Price</option>
+                                <option value="free" {% if request.GET.price_range == 'free' %}selected{% endif %}>Free</option>
+                                <option value="under500" {% if request.GET.price_range == 'under500' %}selected{% endif %}>Under 500 ৳</option>
+                                <option value="500-1000" {% if request.GET.price_range == '500-1000' %}selected{% endif %}>500 - 1000 ৳</option>
+                                <option value="over1000" {% if request.GET.price_range == 'over1000' %}selected{% endif %}>Over 1000 ৳</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort By -->
+                        <div class="mb-3">
+                            <label class="form-label">Sort By</label>
+                            <select name="sort" class="form-select">
+                                <option value="newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest First</option>
+                                <option value="price_low" {% if request.GET.sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                                <option value="price_high" {% if request.GET.sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                                <option value="date" {% if request.GET.sort == 'date' %}selected{% endif %}>Tour Date</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 mb-2">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'tour_list' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">Quick Stats</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Tours:</span>
+                        <strong>{{ tours.count }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Free Tours:</span>
+                        <strong>{{ tours.filter|default:tours|length }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Upcoming:</span>
+                        <strong>{{ tours.count }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tours List -->
+        <div class="col-md-9">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="mb-1">UAP Tours & Events</h2>
+                    <p class="text-muted mb-0">Discover amazing campus experiences</p>
+                </div>
+                <div class="text-end">
+                    <span class="text-muted">{{ tours.count }} tour{{ tours.count|pluralize }} found</span>
+                    {% if user.is_authenticated and user.user_type == 'organizer' %}
+                    <div class="mt-2">
+                        <a href="{% url 'create_tour' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>Create New Tour
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Active Filters -->
+            {% if request.GET.search or request.GET.category or request.GET.price_range %}
+            <div class="alert alert-info mb-4">
+                <strong>Active Filters:</strong>
+                {% if request.GET.search %}
+                <span class="badge bg-primary me-2">Search: "{{ request.GET.search }}"</span>
+                {% endif %}
+                {% if request.GET.category %}
+                <span class="badge bg-success me-2">Category: {{ request.GET.category|title }}</span>
+                {% endif %}
+                {% if request.GET.price_range %}
+                <span class="badge bg-warning me-2">Price: {{ request.GET.price_range|title }}</span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% if tours %}
+            <!-- Tours Grid -->
+            <div class="row">
+                {% for tour in tours %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card tour-card h-100">
+                        <!-- Tour Image -->
+                        {% if tour.image %}
+                        <img src="{{ tour.image.url }}" class="card-img-top" alt="{{ tour.title }}" 
+                             style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" 
+                             style="height: 200px;">
+                            <i class="fas fa-university fa-3x text-white"></i>
+                        </div>
+                        {% endif %}
+
+                        <!-- Wishlist Button -->
+                        {% if user.is_authenticated and user.user_type == 'tourist' %}
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <button class="wishlist-btn {% if tour in user_wishlist %}active{% endif %}" 
+                                    data-tour="{{ tour.id }}" 
+                                    onclick="toggleWishlist({{ tour.id }})">
+                                <i class="{% if tour in user_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body">
+                            <!-- Category Badge -->
+                            <span class="badge bg-primary mb-2">{{ tour.get_category_display }}</span>
+                            
+                            <!-- Tour Title -->
+                            <h5 class="card-title">{{ tour.title }}</h5>
+                            
+                            <!-- Tour Description -->
+                            <p class="card-text">{{ tour.description|truncatewords:20 }}</p>
+                            
+                            <!-- Organizer Info -->
+                            <div class="mb-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>By {{ tour.organizer.organizerprofile.department }}
+                                </small>
+                            </div>
+
+                            <!-- Tour Meta -->
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>{{ tour.duration_hours }}h • 
+                                    <i class="fas fa-users me-1"></i>{{ tour.available_spots }} spots left
+                                </small>
+                            </div>
+
+                            <!-- Price and Action -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 price-taka">
+                                    {% if tour.price == 0 %}
+                                        FREE
+                                    {% else %}
+                                        {{ tour.price }} ৳
+                                    {% endif %}
+                                </span>
+                                <a href="{% url 'tour_detail' tour.id %}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="far fa-calendar me-1"></i>{{ tour.tour_date|date:"M d" }}
+                                </small>
+                                {% if tour.available_spots <= 5 and tour.available_spots > 0 %}
+                                <small class="text-danger">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Few spots left!
+                                </small>
+                                {% elif tour.available_spots == 0 %}
+                                <small class="text-danger">
+                                    <i class="fas fa-times me-1"></i>Sold out
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- No Results Message -->
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No tours found</h4>
+                <p class="text-muted mb-4">Try adjusting your search filters or check back later for new tours.</p>
+                
+                {% if user.is_authenticated and user.user_type == 'organizer' %}
+                <a href="{% url 'create_tour' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create the First Tour
+                </a>
+                {% else %}
+                <a href="{% url 'tour_list' %}" class="btn btn-primary">
+                    <i class="fas fa-redo me-2"></i>Clear All Filters
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Empty State for No Tours -->
+            {% if not tours and not request.GET.search and not request.GET.category and not request.GET.price_range %}
+            <div class="text-center py-5">
+                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No tours available yet</h4>
+                <p class="text-muted mb-4">Be the first to explore UAP by creating a tour!</p>
+                
+                {% if user.is_authenticated and user.user_type == 'organizer' %}
+                <a href="{% url 'create_tour' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-plus me-2"></i>Create First Tour
+                </a>
+                {% elif not user.is_authenticated %}
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Want to organize tours?</h5>
+                                <p class="text-muted">Register as an organizer to create amazing UAP experiences.</p>
+                                <a href="{% url 'register' %}" class="btn btn-success w-100">
+                                    <i class="fas fa-user-plus me-2"></i>Register as Organizer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.tour-card {
+    transition: all 0.3s ease;
+}
+
+.tour-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.wishlist-btn {
+    border: none;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wishlist-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.wishlist-btn.active {
+    color: #dc3545;
+}
+
+.price-taka {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.card-img-top {
+    border-bottom: 1px solid rgba(0,0,0,0.125);
+}
+</style>
+
+<script>
+// Wishlist functionality
+function toggleWishlist(tourId) {
+    if (!{{ user.is_authenticated|yesno:"true,false" }} || '{{ user.user_type }}' !== 'tourist') {
+        alert('Please login as a tourist to add tours to wishlist.');
+        return;
+    }
+
+    fetch(`/tours/wishlist/toggle/${tourId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const heartIcon = document.querySelector(`[data-tour="${tourId}"] i`);
+        const wishlistBtn = document.querySelector(`[data-tour="${tourId}"]`);
+        
+        if (data.added) {
+            heartIcon.className = 'fas fa-heart';
+            wishlistBtn.classList.add('active');
+        } else {
+            heartIcon.className = 'far fa-heart';
+            wishlistBtn.classList.remove('active');
+        }
+        
+        // Show notification
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${data.added ? 'success' : 'warning'} alert-dismissible fade show position-fixed`;
+        toast.style.top = '20px';
+        toast.style.right = '20px';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            ${data.message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 3000);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating wishlist. Please try again.');
+    });
+}
+</script>
+{% endblock %}

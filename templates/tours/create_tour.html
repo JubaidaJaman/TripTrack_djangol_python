@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-plus me-2"></i>Create New Tour</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Tour Title *</label>
+                                    <input type="text" class="form-control" id="title" name="title" required 
+                                           placeholder="e.g., CSE Department Lab Tour, Campus Photography Walk">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="category" class="form-label">Tour Category *</label>
+                                    <select class="form-select" id="category" name="category" required>
+                                        <option value="campus">Campus Tour</option>
+                                        <option value="department">Department Visit</option>
+                                        <option value="cultural">Cultural Event</option>
+                                        <option value="educational">Educational Trip</option>
+                                        <option value="workshop">Workshop</option>
+                                        <option value="seminar">Seminar</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Tour Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required 
+                                      placeholder="Describe your tour in detail..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="price" class="form-label">Price (৳) *</label>
+                                    <input type="number" class="form-control" id="price" name="price" 
+                                           min="0" step="50" required placeholder="0">
+                                    <div class="form-text">Enter 0 for free tours</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="duration_hours" class="form-label">Duration (hours) *</label>
+                                    <input type="number" class="form-control" id="duration_hours" name="duration_hours" 
+                                           min="1" max="24" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="max_participants" class="form-label">Max Participants *</label>
+                                    <input type="number" class="form-control" id="max_participants" name="max_participants" 
+                                           min="1" max="100" required>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="tour_date" class="form-label">Tour Date & Time *</label>
+                                    <input type="datetime-local" class="form-control" id="tour_date" name="tour_date" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="meeting_point" class="form-label">Meeting Point *</label>
+                            <input type="text" class="form-control" id="meeting_point" name="meeting_point" required 
+                                   placeholder="e.g., Main Gate, CSE Building Lobby">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="includes" class="form-label">What's Included</label>
+                            <textarea class="form-control" id="includes" name="includes" rows="3" 
+                                      placeholder="e.g., Guided tour, Refreshments, Materials"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="requirements" class="form-label">Requirements for Participants</label>
+                            <textarea class="form-control" id="requirements" name="requirements" rows="3" 
+                                      placeholder="e.g., Bring student ID, Wear comfortable shoes"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="itinerary" class="form-label">Tour Itinerary (Detailed Schedule)</label>
+                            <textarea class="form-control" id="itinerary" name="itinerary" rows="5" 
+                                      placeholder="e.g., 
+10:00 AM - Meet at Main Gate
+10:15 AM - Campus walk
+11:00 AM - Lab visit
+11:45 AM - Q&A session"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Tour Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Note:</strong> This tour will be associated with your department: 
+                            <strong>{{ user.organizerprofile.department }}</strong>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-lg">Create Tour</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

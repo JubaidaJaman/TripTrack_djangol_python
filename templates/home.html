@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Welcome to UAP TripTrack</h1>
+        <p class="lead mb-4">Discover the University of Asia Pacific through amazing campus tours, department visits, and educational events</p>
+        <a href="{% url 'tour_list' %}" class="btn btn-primary btn-lg me-3">Explore Tours</a>
+        <a href="{% url 'register' %}" class="btn btn-outline-light btn-lg">Join UAP Community</a>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 bg-white shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-map-marked-alt fa-3x text-primary mb-3"></i>
+                        <h3>{{ featured_tours.count }}</h3>
+                        <p class="text-muted">Active Tours</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 bg-white shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-university fa-3x text-success mb-3"></i>
+                        <h3>{{ departments.count }}</h3>
+                        <p class="text-muted">Departments</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 bg-white shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                        <h3>{{ upcoming_tours }}</h3>
+                        <p class="text-muted">Upcoming Events</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="card border-0 bg-white shadow-sm">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-3x text-info mb-3"></i>
+                        <h3>100%</h3>
+                        <p class="text-muted">Online Booking</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Tours -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <h2>Featured Campus Tours</h2>
+            <a href="{% url 'tour_list' %}" class="btn btn-outline-primary">View All Tours</a>
+        </div>
+        <div class="row">
+            {% for tour in featured_tours %}
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card tour-card h-100">
+                    {% if tour.image %}
+                    <img src="{{ tour.image.url }}" class="card-img-top" alt="{{ tour.title }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                        <i class="fas fa-university fa-3x text-white"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <span class="badge bg-primary mb-2">{{ tour.get_category_display }}</span>
+                        <h5 class="card-title">{{ tour.title }}</h5>
+                        <p class="card-text">{{ tour.description|truncatewords:15 }}</p>
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-university me-1"></i>{{ tour.department.name }}
+                            </small>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 price-taka">{{ tour.price }} ৳</span>
+                            <a href="{% url 'tour_detail' tour.id %}" class="btn btn-primary btn-sm">Details</a>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">
+                            <i class="far fa-clock me-1"></i>{{ tour.duration_hours }}h • 
+                            <i class="far fa-calendar me-1"></i>{{ tour.tour_date|date:"M d" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No tours available yet</h4>
+                <p class="text-muted">Check back soon for exciting campus tours and events!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Departments Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">UAP Departments</h2>
+        <div class="row">
+            {% for department in departments %}
+            <div class="col-lg-2 col-md-4 col-6 mb-4">
+                <div class="card text-center h-100 border-0">
+                    <div class="card-body">
+                        <i class="fas fa-graduation-cap fa-2x text-primary mb-3"></i>
+                        <h6 class="card-title">{{ department.code }}</h6>
+                        <small class="text-muted">{{ department.name|truncatewords:3 }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'tour_list' %}?category=department" class="btn btn-primary">Explore Department Tours</a>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">How UAP TripTrack Works</h2>
+        <div class="row">
+            <div class="col-md-4 text-center mb-4">
+                <div class="mb-3">
+                    <div class="bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-search fa-2x text-white"></i>
+                    </div>
+                </div>
+                <h5>1. Browse Tours</h5>
+                <p>Explore campus tours, department visits, and educational events</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="mb-3">
+                    <div class="bg-success rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-credit-card fa-2x text-white"></i>
+                    </div>
+                </div>
+                <h5>2. Book & Pay</h5>
+                <p>Secure your spot with easy online booking and payment</p>
+            </div>
+            <div class="col-md-4 text-center mb-4">
+                <div class="mb-3">
+                    <div class="bg-warning rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                        <i class="fas fa-map-marked-alt fa-2x text-white"></i>
+                    </div>
+                </div>
+                <h5>3. Enjoy Tour</h5>
+                <p>Join the tour and explore UAP with expert guides</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

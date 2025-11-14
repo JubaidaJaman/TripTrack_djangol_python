@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-university me-2"></i>{{ department.name }} Tours</h2>
+                <a href="{% url 'tour_list' %}" class="btn btn-outline-primary">All Tours</a>
+            </div>
+
+            {% if tours %}
+            <div class="row">
+                {% for tour in tours %}
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card tour-card h-100">
+                        {% if tour.image %}
+                        <img src="{{ tour.image.url }}" class="card-img-top" alt="{{ tour.title }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                        <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <i class="fas fa-university fa-3x text-white"></i>
+                        </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <span class="badge bg-primary mb-2">{{ tour.get_category_display }}</span>
+                            <h5 class="card-title">{{ tour.title }}</h5>
+                            <p class="card-text">{{ tour.description|truncatewords:20 }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 price-taka">{{ tour.price }} ৳</span>
+                                <a href="{% url 'tour_detail' tour.id %}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <small class="text-muted">
+                                <i class="far fa-clock me-1"></i>{{ tour.duration_hours }} hours • 
+                                <i class="fas fa-users me-1"></i>{{ tour.available_spots }} spots left
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-university fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">No tours available for {{ department.name }}</h4>
+                <p class="text-muted">Check back later for new tours from this department.</p>
+                <a href="{% url 'tour_list' %}" class="btn btn-primary">Browse All Tours</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
