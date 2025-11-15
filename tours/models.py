@@ -130,6 +130,64 @@ class Tour(models.Model):
         
         super().save(*args, **kwargs)
 
+
+# tours/models.py - ADD THESE MODELS
+class Notification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('reminder', 'Tour Reminder'),
+        ('announcement', 'Announcement'),
+        ('update', 'Tour Update'),
+        ('cancellation', 'Cancellation'),
+        ('promotion', 'Promotion'),
+    )
+    
+    organizer = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'organizer'})
+    tour = models.ForeignKey('Tour', on_delete=models.CASCADE, null=True, blank=True)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES, default='announcement')
+    target_users = models.ManyToManyField(User, blank=True, related_name='received_notifications', limit_choices_to={'user_type': 'tourist'})
+    send_to_all_tourists = models.BooleanField(default=False)
+    scheduled_send = models.DateTimeField(null=True, blank=True)
+    is_sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.notification_type}: {self.title}"
+    
+    def save(self, *args, **kwargs):
+        if self.send_to_all_tourists and not self.target_users.exists():
+            # Auto-add all tourists if send_to_all_tourists is True
+            tourists = User.objects.filter(user_type='tourist')
+            super().save(*args, **kwargs)
+            self.target_users.set(tourists)
+        else:
+            super().save(*args, **kwargs)
+    
+    def mark_as_sent(self):
+        self.is_sent = True
+        self.save()
+
+class UserNotification(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE)
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['user', 'notification']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.notification.title}"
+    
+    def mark_as_read(self):
+        from django.utils import timezone
+        self.is_read = True
+        self.read_at = timezone.now()
+        self.save()
+
+
 class Booking(models.Model):
     BOOKING_STATUS = (
         ('pending', 'Pending'),

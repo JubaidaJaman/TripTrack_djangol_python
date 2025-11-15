@@ -5,13 +5,16 @@ from django.db.models import Q, Avg, Count
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
-from django.views.decorators.http import require_POST  # ADD THIS IMPORT
+from django.views.decorators.http import require_POST
 import uuid
-import qrcode  # ADD THIS IMPORT
-from io import BytesIO  # ADD THIS IMPORT
-from django.core.files import File  # ADD THIS IMPORT
-from .models import Tour, UAPDepartment, Booking, Review, Wishlist, Payment
-from .forms import TourForm, BookingForm, ReviewForm, UAPDepartmentForm
+import qrcode
+from io import BytesIO
+from django.core.files import File
+from django.contrib.auth import get_user_model
+from .models import Tour, UAPDepartment, Booking, Review, Wishlist, Payment, Notification, UserNotification
+from .forms import TourForm, BookingForm, ReviewForm, UAPDepartmentForm, NotificationForm, QuickReminderForm
+
+User = get_user_model()
 
 def home(request):
     # Create UAP departments if none exist
@@ -248,7 +251,7 @@ def department_tours(request, department_id):
         'tours': tours,
     })
 
-# NEW QR CODE VIEW FUNCTION
+# QR Code View Function
 @require_POST
 @login_required
 def generate_qr_code(request, tour_id):
@@ -271,3 +274,179 @@ def generate_qr_code(request, tour_id):
     
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+# NOTIFICATION VIEWS
+@login_required
+def send_notification(request):
+    if request.user.user_type != 'organizer':
+        messages.error(request, 'Only organizers can send notifications.')
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        form = NotificationForm(request.POST, organizer=request.user)
+        if form.is_valid():
+            notification = form.save(commit=False)
+            notification.organizer = request.user
+            
+            # Handle immediate sending
+            if not notification.scheduled_send or notification.scheduled_send <= timezone.now():
+                notification.is_sent = True
+            
+            notification.save()
+            form.save_m2m()  # Save many-to-many relationships
+            
+            # Create UserNotification records for target users
+            if notification.send_to_all_tourists:
+                tourists = User.objects.filter(user_type='tourist')
+            else:
+                tourists = notification.target_users.all()
+            
+            for tourist in tourists:
+                UserNotification.objects.get_or_create(
+                    user=tourist,
+                    notification=notification
+                )
+            
+            messages.success(request, f'Notification sent to {tourists.count()} tourists!')
+            return redirect('organizer_notifications')
+    else:
+        form = NotificationForm(organizer=request.user)
+    
+    return render(request, 'notifications/send_notification.html', {'form': form})
+
+@login_required
+def send_quick_reminder(request):
+    if request.user.user_type != 'organizer':
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    
+    if request.method == 'POST':
+        tour_id = request.POST.get('tour')
+        message = request.POST.get('message')
+        
+        if not tour_id or not message:
+            return JsonResponse({'success': False, 'error': 'Tour and message are required'})
+        
+        try:
+            tour = Tour.objects.get(id=tour_id, organizer=request.user)
+            
+            # Create notification
+            notification = Notification.objects.create(
+                organizer=request.user,
+                tour=tour,
+                title=f'Reminder: {tour.title}',
+                message=message,
+                notification_type='reminder',
+                send_to_all_tourists=False,
+                is_sent=True
+            )
+            
+            # Get tourists who booked this tour
+            booked_tourists = User.objects.filter(
+                booking__tour=tour,
+                booking__status='confirmed'
+            ).distinct()
+            
+            notification.target_users.set(booked_tourists)
+            
+            # Create UserNotification records
+            for tourist in booked_tourists:
+                UserNotification.objects.create(
+                    user=tourist,
+                    notification=notification
+                )
+            
+            return JsonResponse({'success': True, 'message': f'Quick reminder sent to {booked_tourists.count()} tourists!'})
+        
+        except Tour.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Tour not found'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@login_required
+def organizer_notifications(request):
+    if request.user.user_type != 'organizer':
+        messages.error(request, 'Access denied.')
+        return redirect('dashboard')
+    
+    notifications = Notification.objects.filter(organizer=request.user).order_by('-created_at')
+    return render(request, 'notifications/organizer_notifications.html', {
+        'notifications': notifications
+    })
+
+@login_required
+def my_notifications(request):
+    user_notifications = UserNotification.objects.filter(user=request.user).order_by('-created_at')
+    unread_count = user_notifications.filter(is_read=False).count()
+    
+    return render(request, 'notifications/my_notifications.html', {
+        'user_notifications': user_notifications,
+        'unread_count': unread_count
+    })
+
+@require_POST
+@login_required
+def mark_notification_read(request, notification_id):
+    try:
+        user_notification = UserNotification.objects.get(
+            id=notification_id,
+            user=request.user
+        )
+        user_notification.mark_as_read()
+        return JsonResponse({'success': True})
+    except UserNotification.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Notification not found'})
+
+@login_required
+def mark_all_notifications_read(request):
+    UserNotification.objects.filter(user=request.user, is_read=False).update(
+        is_read=True,
+        read_at=timezone.now()
+    )
+    messages.success(request, 'All notifications marked as read!')
+    return redirect('my_notifications')
+
+@login_required
+def get_unread_count(request):
+    if request.user.is_authenticated:
+        unread_count = UserNotification.objects.filter(user=request.user, is_read=False).count()
+        return JsonResponse({'unread_count': unread_count})
+    return JsonResponse({'unread_count': 0})
+
+# Helper function to get recent notifications for dropdown
+@login_required
+def get_recent_notifications(request):
+    if request.user.is_authenticated:
+        recent_notifications = UserNotification.objects.filter(
+            user=request.user
+        ).order_by('-created_at')[:5]
+        
+        notifications_data = []
+        for user_notification in recent_notifications:
+            notifications_data.append({
+                'id': user_notification.id,
+                'title': user_notification.notification.title,
+                'message': user_notification.notification.message,
+                'type': user_notification.notification.notification_type,
+                'is_read': user_notification.is_read,
+                'created_at': user_notification.created_at.strftime("%b %d, %H:%M"),
+                'time_ago': get_time_ago(user_notification.created_at)
+            })
+        
+        return JsonResponse({'notifications': notifications_data})
+    return JsonResponse({'notifications': []})
+
+def get_time_ago(created_at):
+    """Helper function to get human-readable time difference"""
+    now = timezone.now()
+    diff = now - created_at
+    
+    if diff.days > 0:
+        return f"{diff.days}d ago"
+    elif diff.seconds // 3600 > 0:
+        return f"{diff.seconds // 3600}h ago"
+    elif diff.seconds // 60 > 0:
+        return f"{diff.seconds // 60}m ago"
+    else:
+        return "Just now"

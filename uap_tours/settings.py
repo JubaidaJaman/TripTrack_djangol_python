@@ -11,6 +11,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # FIXED: Added all required Django apps
+# uap_tours/settings.py
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -18,10 +19,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Third party apps
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'django_filters',
+    'widget_tweaks',
+    'notifications',  # ADD THIS
+    
+    # Your apps
     'accounts',
     'tours',
     'dashboard',
 ]
+
+
+# Crispy Forms Configuration
+#CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+#CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # FIXED: Added all required middleware
 MIDDLEWARE = [
