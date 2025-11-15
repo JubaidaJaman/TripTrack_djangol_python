@@ -1,3 +1,4 @@
+<!-- templates/dashboard/organizer_dashboard.html -->
 {% extends 'base.html' %}
 
 {% block content %}
@@ -82,6 +83,7 @@
                                     <th>Spots</th>
                                     <th>Status</th>
                                     <th>Bookings</th>
+                                    <th>QR Code</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -115,6 +117,29 @@
                                     </td>
                                     <td>
                                         <strong>{{ tour.booking_set.count }}</strong>
+                                    </td>
+                                    <td>
+                                        <!-- QR Code Actions -->
+                                        {% if tour.qr_code %}
+                                            <div class="text-center">
+                                                <img src="{{ tour.qr_code.url }}" alt="QR Code" 
+                                                     class="img-fluid mb-2" style="max-width: 60px; height: auto;">
+                                                <div>
+                                                    <a href="{{ tour.qr_code.url }}" download class="btn btn-info btn-sm" title="Download QR Code">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <form method="post" style="display: inline;">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="generate_qr" value="{{ tour.id }}">
+                                                <button type="submit" class="btn btn-outline-info btn-sm" title="Generate QR Code"
+                                                        onclick="return confirm('Generate QR code for {{ tour.title }}?')">
+                                                    <i class="fas fa-qrcode"></i> Generate
+                                                </button>
+                                            </form>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <!-- Publish/Unpublish Buttons for Organizers -->
@@ -246,7 +271,73 @@
                     </div>
                 </div>
             </div>
+
+            <!-- QR Code Instructions -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i>QR Code Guide</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Benefits of QR Codes:</h6>
+                            <ul class="small">
+                                <li>Quick access to tour details</li>
+                                <li>Easy mobile booking</li>
+                                <li>Share via social media</li>
+                                <li>Print for physical promotion</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>How to Use:</h6>
+                            <ol class="small">
+                                <li>Generate QR code for published tours</li>
+                                <li>Download and share digitally</li>
+                                <li>Print for campus posters</li>
+                                <li>Students scan to book instantly</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+.price-taka {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+/* QR Code image styling */
+.qr-code-img {
+    max-width: 60px;
+    height: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 2px;
+    background: white;
+}
+</style>
 {% endblock %}

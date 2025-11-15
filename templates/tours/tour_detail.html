@@ -183,7 +183,78 @@
                                        onchange="updateTotalPrice(this.value)">
                                 <small class="text-muted">Available spots: {{ tour.available_spots }}</small>
                             </div>
+        <!-- Add this to templates/tours/tour_detail.html in the booking sidebar (col-md-4) -->
+<!-- QR Code Card -->
+<div class="card mt-4">
+    <div class="card-body text-center">
+        <h6><i class="fas fa-qrcode me-2 text-primary"></i>Quick Book QR Code</h6>
+        
+        {% if tour.qr_code %}
+            <img src="{{ tour.qr_code.url }}" alt="QR Code for {{ tour.title }}" 
+                 class="img-fluid mb-3 qr-code-large" style="max-width: 200px; border: 2px solid #dee2e6; border-radius: 8px; padding: 10px; background: white;">
+            <p class="small text-muted mb-2">
+                Scan to view tour details and book instantly
+            </p>
+            <div class="btn-group w-100">
+                <a href="{{ tour.qr_code.url }}" download class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-download me-1"></i>Download QR
+                </a>
+                {% if user.is_authenticated and user == tour.organizer or user.user_type == 'developer' %}
+                <button onclick="generateNewQR({{ tour.id }})" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-sync me-1"></i>Regenerate
+                </button>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="bg-light rounded p-4 mb-3">
+                <i class="fas fa-qrcode fa-3x text-muted mb-3"></i>
+                <p class="small text-muted">QR Code not generated yet</p>
+            </div>
+            {% if user.is_authenticated and user == tour.organizer or user.user_type == 'developer' %}
+            <button onclick="generateNewQR({{ tour.id }})" class="btn btn-primary btn-sm w-100">
+                <i class="fas fa-plus me-1"></i>Generate QR Code
+            </button>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
 
+<style>
+.qr-code-large {
+    transition: transform 0.3s ease;
+}
+.qr-code-large:hover {
+    transform: scale(1.05);
+}
+</style>
+
+<script>
+// QR Code Generation Function
+function generateNewQR(tourId) {
+    if (!confirm('Generate new QR code for this tour?')) return;
+    
+    fetch(`/tours/generate-qr/${tourId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('QR Code generated successfully! Page will reload to show the QR code.');
+            location.reload(); // Reload to show new QR code
+        } else {
+            alert('Error generating QR code: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error generating QR code. Please try again.');
+    });
+}
+</script>
                             <!-- Payment Method -->
                             <div class="mb-3">
                                 <label for="payment_method" class="form-label">Payment Method *</label>
@@ -432,6 +503,8 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTotalPrice(initialParticipants);
     togglePaymentNumber();
 });
+
+
 
 // Wishlist functionality
 function toggleWishlist(tourId) {

@@ -10,4 +10,5 @@ urlpatterns = [
     path('tours/wishlist/', views.my_wishlist, name='my_wishlist'),
     path('tours/reviews/', views.my_reviews, name='my_reviews'),
     path('tours/department/<int:department_id>/', views.department_tours, name='department_tours'),
+    path('tours/generate-qr/<int:tour_id>/', views.generate_qr_code, name='generate_qr_code'),  
 ]

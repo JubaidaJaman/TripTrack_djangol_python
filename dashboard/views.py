@@ -1,3 +1,4 @@
+# dashboard/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -44,7 +45,7 @@ def dashboard(request):
         # Get organizer profile
         organizer_profile = OrganizerProfile.objects.get(user=user)
         
-        # Add publishing functionality for organizers
+        # Add publishing AND QR code functionality for organizers
         if request.method == 'POST':
             if 'publish_tour' in request.POST:
                 tour_id = request.POST.get('tour_id')
@@ -66,6 +67,27 @@ def dashboard(request):
                     messages.success(request, f'Tour "{tour_to_unpublish.title}" unpublished successfully!')
                 except Tour.DoesNotExist:
                     messages.error(request, 'Tour not found!')
+                return redirect('dashboard')
+            
+            # NEW: Handle QR code generation from dashboard
+            elif 'generate_qr' in request.POST:
+                tour_id = request.POST.get('generate_qr')
+                try:
+                    tour = Tour.objects.get(id=tour_id, organizer=user)
+                    
+                    # Delete old QR code if exists
+                    if tour.qr_code:
+                        tour.qr_code.delete(save=False)
+                    
+                    # Generate new QR code
+                    tour.generate_qr_code()
+                    tour.save()
+                    
+                    messages.success(request, f'QR Code generated for "{tour.title}"! You can now download and share it.')
+                except Tour.DoesNotExist:
+                    messages.error(request, 'Tour not found!')
+                except Exception as e:
+                    messages.error(request, f'Error generating QR code: {str(e)}')
                 return redirect('dashboard')
         
         context = {
@@ -145,6 +167,27 @@ def dashboard(request):
                     messages.success(request, f'Tour "{tour_to_unpublish.title}" unpublished successfully!')
                 except Tour.DoesNotExist:
                     messages.error(request, 'Tour not found!')
+                return redirect('dashboard')
+            
+            # NEW: Handle QR code generation for developers
+            elif 'generate_qr' in request.POST:
+                tour_id = request.POST.get('generate_qr')
+                try:
+                    tour = Tour.objects.get(id=tour_id)
+                    
+                    # Delete old QR code if exists
+                    if tour.qr_code:
+                        tour.qr_code.delete(save=False)
+                    
+                    # Generate new QR code
+                    tour.generate_qr_code()
+                    tour.save()
+                    
+                    messages.success(request, f'QR Code generated for "{tour.title}"!')
+                except Tour.DoesNotExist:
+                    messages.error(request, 'Tour not found!')
+                except Exception as e:
+                    messages.error(request, f'Error generating QR code: {str(e)}')
                 return redirect('dashboard')
         
         context = {

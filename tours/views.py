@@ -1,10 +1,15 @@
+# tours/views.py
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Avg, Count
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
+from django.views.decorators.http import require_POST  # ADD THIS IMPORT
 import uuid
+import qrcode  # ADD THIS IMPORT
+from io import BytesIO  # ADD THIS IMPORT
+from django.core.files import File  # ADD THIS IMPORT
 from .models import Tour, UAPDepartment, Booking, Review, Wishlist, Payment
 from .forms import TourForm, BookingForm, ReviewForm, UAPDepartmentForm
 
@@ -75,6 +80,14 @@ def tour_list(request):
 
 def tour_detail(request, tour_id):
     tour = get_object_or_404(Tour, id=tour_id)
+    
+    # Auto-generate QR code for published tours if not exists
+    if tour.status == 'published' and not tour.qr_code:
+        try:
+            tour.generate_qr_code()
+            tour.save()
+        except Exception as e:
+            print(f"Error generating QR code: {e}")
     
     # Allow anyone to view tour details, but restrict booking to published tours only
     if tour.status != 'published' and (not request.user.is_authenticated or request.user != tour.organizer):
@@ -234,3 +247,27 @@ def department_tours(request, department_id):
         'department': department,
         'tours': tours,
     })
+
+# NEW QR CODE VIEW FUNCTION
+@require_POST
+@login_required
+def generate_qr_code(request, tour_id):
+    tour = get_object_or_404(Tour, id=tour_id)
+    
+    # Check if user is the organizer or developer
+    if request.user != tour.organizer and request.user.user_type != 'developer':
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    
+    try:
+        # Delete old QR code if exists
+        if tour.qr_code:
+            tour.qr_code.delete(save=False)
+        
+        # Generate new QR code
+        tour.generate_qr_code()
+        tour.save()
+        
+        return JsonResponse({'success': True, 'message': 'QR code generated successfully'})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
