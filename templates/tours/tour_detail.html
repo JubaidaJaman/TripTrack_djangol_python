@@ -1,9 +1,11 @@
+<!-- templates/tours/tour_detail.html -->
 {% extends 'base.html' %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
         <div class="col-md-8">
+            <!-- Tour Information Card -->
             <div class="card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
@@ -14,12 +16,13 @@
                                 <i class="fas fa-user me-1"></i>Organized by: {{ tour.organizer.organizerprofile.department }}
                             </p>
                         </div>
+                        {% if user.is_authenticated and user.user_type == 'tourist' %}
                         <button class="wishlist-btn {% if in_wishlist %}active{% endif %}" 
                                 data-tour="{{ tour.id }}" 
-                                onclick="toggleWishlist({{ tour.id }})"
-                                {% if not user.is_authenticated or user.user_type != 'tourist' %}disabled{% endif %}>
+                                onclick="toggleWishlist({{ tour.id }})">
                             <i class="{% if in_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
                         </button>
+                        {% endif %}
                     </div>
 
                     {% if tour.image %}
@@ -27,6 +30,14 @@
                     {% else %}
                     <div class="bg-secondary rounded d-flex align-items-center justify-content-center mb-4" style="height: 300px;">
                         <i class="fas fa-university fa-5x text-white"></i>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Tour Status Alert -->
+                    {% if tour.status != 'published' %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        This tour is currently not available for booking.
                     </div>
                     {% endif %}
                     
@@ -68,105 +79,81 @@
                         <p class="card-text">{{ tour.itinerary|linebreaks }}</p>
                     </div>
                     {% endif %}
-                    
-                    {% if average_rating > 0 %}
-                    <div class="mt-4">
-                        <h5>Tour Reviews</h5>
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="text-warning me-3">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= average_rating %}
-                                        <i class="fas fa-star"></i>
-                                    {% else %}
-                                        <i class="far fa-star"></i>
-                                    {% endif %}
-                                {% endfor %}
-                            </div>
-                            <span class="me-3">{{ average_rating|floatformat:1 }} out of 5</span>
-                            <span class="text-muted">{{ review_count }} review{{ review_count|pluralize }}</span>
-                        </div>
-                        
-                        {% for review in reviews %}
-                        <div class="card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="card-title mb-0">{{ review.tourist.username }}</h6>
-                                    <div class="text-warning">
-                                        {% for i in "12345" %}
-                                            {% if forloop.counter <= review.rating %}
-                                                <i class="fas fa-star"></i>
-                                            {% else %}
-                                                <i class="far fa-star"></i>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                <p class="card-text mb-2">{{ review.comment }}</p>
-                                <small class="text-muted">Reviewed on {{ review.created_at|date:"M d, Y" }}</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    {% if user.is_authenticated and user.user_type == 'tourist' %}
-                    <div class="mt-4">
-                        <h5>Add Your Review</h5>
-                        <form method="post">
-                            {% csrf_token %}
-                            <input type="hidden" name="add_review" value="true">
-                            <div class="mb-3">
-                                <label class="form-label">Rating</label>
-                                <div class="rating-stars">
-                                    {% for i in "54321" %}
-                                    <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
-                                    <label for="star{{ i }}"><i class="far fa-star"></i></label>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Your Review</label>
-                                <textarea class="form-control" name="comment" rows="4" placeholder="Share your experience..." required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Submit Review</button>
-                        </form>
-                    </div>
-                    {% endif %}
                 </div>
             </div>
 
-            <!-- Related Tours -->
-            {% if related_tours %}
+            <!-- Reviews Section -->
+            {% if average_rating > 0 %}
             <div class="card mt-4">
                 <div class="card-body">
-                    <h5 class="card-title">Related Tours</h5>
-                    <div class="row">
-                        {% for related_tour in related_tours %}
-                        <div class="col-md-6 mb-3">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h6 class="card-title">{{ related_tour.title }}</h6>
-                                    <p class="card-text small">{{ related_tour.description|truncatewords:15 }}</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="price-taka">
-                                            {% if related_tour.price == 0 %}
-                                                FREE
-                                            {% else %}
-                                                {{ related_tour.price }} ৳
-                                            {% endif %}
-                                        </span>
-                                        <a href="{% url 'tour_detail' related_tour.id %}" class="btn btn-sm btn-outline-primary">View</a>
-                                    </div>
+                    <h5>Tour Reviews</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="text-warning me-3">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= average_rating %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="me-3">{{ average_rating|floatformat:1 }} out of 5</span>
+                        <span class="text-muted">{{ review_count }} review{{ review_count|pluralize }}</span>
+                    </div>
+                    
+                    {% for review in reviews %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="card-title mb-0">{{ review.tourist.username }}</h6>
+                                <div class="text-warning">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
                                 </div>
                             </div>
+                            <p class="card-text mb-2">{{ review.comment }}</p>
+                            <small class="text-muted">Reviewed on {{ review.created_at|date:"M d, Y" }}</small>
                         </div>
-                        {% endfor %}
                     </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Add Review Form -->
+            {% if user.is_authenticated and user.user_type == 'tourist' %}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5>Add Your Review</h5>
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="add_review" value="true">
+                        <div class="mb-3">
+                            <label class="form-label">Rating</label>
+                            <div class="rating-stars">
+                                {% for i in "54321" %}
+                                <input type="radio" id="star{{ i }}" name="rating" value="{{ i }}" required>
+                                <label for="star{{ i }}"><i class="far fa-star"></i></label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Your Review</label>
+                            <textarea class="form-control" name="comment" rows="4" placeholder="Share your experience..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Review</button>
+                    </form>
                 </div>
             </div>
             {% endif %}
         </div>
 
+        <!-- Booking Sidebar -->
         <div class="col-md-4">
             <!-- Booking Card -->
             <div class="card sticky-top" style="top: 20px;">
@@ -185,63 +172,112 @@
                         <small class="text-muted">per person</small>
                     </div>
                     
-                    {% if user.is_authenticated and user.user_type == 'tourist' %}
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="participants" class="form-label">Number of Participants</label>
-                            <input type="number" class="form-control" id="participants" name="participants" 
-                                   min="1" max="{{ tour.available_spots }}" value="1" required
-                                   onchange="updateTotalPrice(this.value)">
-                            <small class="text-muted">Available spots: {{ tour.available_spots }}</small>
-                        </div>
+                    {% if tour.status == 'published' %}
+                        {% if user.is_authenticated and user.user_type == 'tourist' %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="participants" class="form-label">Number of Participants</label>
+                                <input type="number" class="form-control" id="participants" name="participants" 
+                                       min="1" max="{{ tour.available_spots }}" value="1" required
+                                       onchange="updateTotalPrice(this.value)">
+                                <small class="text-muted">Available spots: {{ tour.available_spots }}</small>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="payment_method" class="form-label">Payment Method</label>
-                            <select class="form-select" id="payment_method" name="payment_method" required>
-                                <option value="">Select Payment Method</option>
-                                <option value="bkash">bKash</option>
-                                <option value="nagad">Nagad</option>
-                                <option value="rocket">Rocket</option>
-                                <option value="card">Credit/Debit Card</option>
-                                <option value="cash">Cash (On-site)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="special_requirements" class="form-label">Special Requirements</label>
-                            <textarea class="form-control" id="special_requirements" name="special_requirements" 
-                                      rows="3" placeholder="Any special requirements or notes..."></textarea>
-                        </div>
+                            <!-- Payment Method -->
+                            <div class="mb-3">
+                                <label for="payment_method" class="form-label">Payment Method *</label>
+                                <select class="form-select" id="payment_method" name="payment_method" required onchange="togglePaymentNumber()">
+                                    <option value="">Select Payment Method</option>
+                                    <option value="bkash">bKash</option>
+                                    <option value="nagad">Nagad</option>
+                                    <option value="rocket">Rocket</option>
+                                    <option value="card">Credit/Debit Card</option>
+                                    <option value="bank">Bank Transfer</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Payment Number (for mobile payments) -->
+                            <div class="mb-3" id="payment_number_field" style="display: none;">
+                                <label for="payment_number" class="form-label">Mobile Number *</label>
+                                <input type="text" class="form-control" id="payment_number" name="payment_number" 
+                                       placeholder="e.g., 01XXXXXXXXX">
+                                <small class="text-muted">Enter your bKash/Nagad/Rocket number</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="special_requirements" class="form-label">Special Requirements</label>
+                                <textarea class="form-control" id="special_requirements" name="special_requirements" 
+                                          rows="3" placeholder="Any special requirements or notes..."></textarea>
+                            </div>
 
+                            <!-- Payment Instructions -->
+                            <div class="alert alert-info" id="payment_instructions" style="display: none;">
+                                <h6><i class="fas fa-info-circle me-2"></i>Payment Instructions:</h6>
+                                <div id="bkash_instructions" style="display: none;">
+                                    <p><strong>bKash Payment:</strong></p>
+                                    <ol class="small">
+                                        <li>Go to your bKash app</li>
+                                        <li>Send money to: <strong>017XXXXXXXX</strong></li>
+                                        <li>Enter amount: <strong id="bkash_amount">0</strong> ৳</li>
+                                        <li>Use reference: <strong>UAP{{ tour.id }}</strong></li>
+                                    </ol>
+                                </div>
+                                <div id="nagad_instructions" style="display: none;">
+                                    <p><strong>Nagad Payment:</strong></p>
+                                    <ol class="small">
+                                        <li>Go to your Nagad app</li>
+                                        <li>Send money to: <strong>017XXXXXXXX</strong></li>
+                                        <li>Enter amount: <strong id="nagad_amount">0</strong> ৳</li>
+                                        <li>Use reference: <strong>UAP{{ tour.id }}</strong></li>
+                                    </ol>
+                                </div>
+                                <div id="rocket_instructions" style="display: none;">
+                                    <p><strong>Rocket Payment:</strong></p>
+                                    <ol class="small">
+                                        <li>Go to your Rocket app</li>
+                                        <li>Send money to: <strong>017XXXXXXXX</strong></li>
+                                        <li>Enter amount: <strong id="rocket_amount">0</strong> ৳</li>
+                                        <li>Use reference: <strong>UAP{{ tour.id }}</strong></li>
+                                    </ol>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-success">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Total Amount:</strong> 
+                                <span id="totalPrice">
+                                    {% if tour.price == 0 %}
+                                        0 ৳
+                                    {% else %}
+                                        {{ tour.price }} ৳
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100 btn-lg">
+                                <i class="fas fa-lock me-2"></i>Book Now & Pay
+                            </button>
+                        </form>
+                        {% elif user.is_authenticated and user.user_type != 'tourist' %}
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Total Amount:</strong> 
-                            <span id="totalPrice">
-                                {% if tour.price == 0 %}
-                                    0 ৳
-                                {% else %}
-                                    {{ tour.price }} ৳
-                                {% endif %}
-                            </span>
+                            Only tourists can book tours. Please register as a tourist to book this tour.
                         </div>
-                        
-                        <button type="submit" class="btn btn-success w-100 btn-lg">
-                            <i class="fas fa-lock me-2"></i>Book Now & Pay
-                        </button>
-                    </form>
-                    {% elif user.is_authenticated and user.user_type != 'tourist' %}
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        Only tourists can book tours. Please register as a tourist to book this tour.
-                    </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Please login as a tourist to book this tour.
+                        </div>
+                        <div class="text-center">
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary w-100 mb-2">Login</a>
+                            <a href="{% url 'register' %}" class="btn btn-outline-primary w-100">Register as Tourist</a>
+                        </div>
+                        {% endif %}
                     {% else %}
                     <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        Please <a href="{% url 'login' %}" class="alert-link">login</a> as a tourist to book this tour.
-                    </div>
-                    <div class="text-center">
-                        <a href="{% url 'register' %}" class="btn btn-outline-primary w-100">Register as Tourist</a>
+                        <i class="fas fa-clock me-2"></i>
+                        This tour is not available for booking at the moment.
                     </div>
                     {% endif %}
                 </div>
@@ -278,13 +314,15 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Booked Spots:</span>
-                        <strong>{{ tour.max_participants|add:-tour.available_spots }}</strong>
+                        <strong>{{ tour.booking_set.count }}</strong>
                     </div>
+                    {% if tour.max_participants > 0 %}
                     <div class="progress mb-3" style="height: 8px;">
                         <div class="progress-bar bg-success" 
-                             style="width: {% widthratio tour.max_participants|add:-tour.available_spots tour.max_participants 100 %}%">
+                             style="width: {% widthratio tour.booking_set.count tour.max_participants 100 %}%">
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -323,6 +361,22 @@
     position: sticky;
     z-index: 10;
 }
+
+.wishlist-btn {
+    border: none;
+    background: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #6c757d;
+}
+
+.wishlist-btn.active {
+    color: #dc3545;
+}
+
+.wishlist-btn:hover {
+    color: #dc3545;
+}
 </style>
 
 <script>
@@ -336,11 +390,74 @@ function updateTotalPrice(participants) {
     } else {
         totalPriceElement.textContent = totalPrice + ' ৳';
     }
+    
+    // Update payment instructions amounts
+    document.getElementById('bkash_amount').textContent = totalPrice;
+    document.getElementById('nagad_amount').textContent = totalPrice;
+    document.getElementById('rocket_amount').textContent = totalPrice;
 }
 
-// Initialize total price on page load
+function togglePaymentNumber() {
+    const paymentMethod = document.getElementById('payment_method').value;
+    const paymentNumberField = document.getElementById('payment_number_field');
+    const paymentInstructions = document.getElementById('payment_instructions');
+    
+    // Hide all instructions first
+    document.getElementById('bkash_instructions').style.display = 'none';
+    document.getElementById('nagad_instructions').style.display = 'none';
+    document.getElementById('rocket_instructions').style.display = 'none';
+    
+    // Show payment number field for mobile payments
+    if (['bkash', 'nagad', 'rocket'].includes(paymentMethod)) {
+        paymentNumberField.style.display = 'block';
+        paymentInstructions.style.display = 'block';
+        
+        // Show specific instructions
+        if (paymentMethod === 'bkash') {
+            document.getElementById('bkash_instructions').style.display = 'block';
+        } else if (paymentMethod === 'nagad') {
+            document.getElementById('nagad_instructions').style.display = 'block';
+        } else if (paymentMethod === 'rocket') {
+            document.getElementById('rocket_instructions').style.display = 'block';
+        }
+    } else {
+        paymentNumberField.style.display = 'none';
+        paymentInstructions.style.display = 'none';
+    }
+}
+
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     const initialParticipants = document.getElementById('participants').value;
     updateTotalPrice(initialParticipants);
+    togglePaymentNumber();
 });
+
+// Wishlist functionality
+function toggleWishlist(tourId) {
+    fetch(`/tours/wishlist/toggle/${tourId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        const heartIcon = document.querySelector(`[data-tour="${tourId}"] i`);
+        const wishlistBtn = document.querySelector(`[data-tour="${tourId}"]`);
+        
+        if (data.added) {
+            heartIcon.className = 'fas fa-heart';
+            wishlistBtn.classList.add('active');
+        } else {
+            heartIcon.className = 'far fa-heart';
+            wishlistBtn.classList.remove('active');
+        }
+        
+        // Show notification
+        alert(data.message);
+    });
+}
 </script>
+{% endblock %}

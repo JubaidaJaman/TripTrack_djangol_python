@@ -1,3 +1,4 @@
+# uap_tours/settings.py
 import os
 from pathlib import Path
 
@@ -9,7 +10,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# FIXED: Added all required Django apps
 INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -20,6 +23,7 @@ INSTALLED_APPS = [
     'dashboard',
 ]
 
+# FIXED: Added all required middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

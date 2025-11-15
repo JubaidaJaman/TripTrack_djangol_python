@@ -22,6 +22,7 @@ def home(request):
         for dept_data in departments_data:
             UAPDepartment.objects.create(**dept_data)
     
+    # Only show published tours
     featured_tours = Tour.objects.filter(status='published', tour_date__gte=timezone.now())[:8]
     departments = UAPDepartment.objects.all()
     upcoming_tours = Tour.objects.filter(status='published', tour_date__gte=timezone.now()).count()
@@ -33,6 +34,7 @@ def home(request):
     })
 
 def tour_list(request):
+    # Only show published tours
     tours = Tour.objects.filter(status='published', tour_date__gte=timezone.now())
     
     # Filtering
@@ -74,9 +76,10 @@ def tour_list(request):
 def tour_detail(request, tour_id):
     tour = get_object_or_404(Tour, id=tour_id)
     
+    # Allow anyone to view tour details, but restrict booking to published tours only
     if tour.status != 'published' and (not request.user.is_authenticated or request.user != tour.organizer):
-        messages.error(request, 'This tour is not available.')
-        return redirect('tour_list')
+        messages.error(request, 'This tour is not available for booking.')
+        # Still show the tour details but disable booking
     
     reviews = Review.objects.filter(tour=tour)
     average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
@@ -88,17 +91,22 @@ def tour_detail(request, tour_id):
         in_wishlist = Wishlist.objects.filter(tourist=request.user, tour=tour).exists()
     
     if request.method == 'POST' and request.user.is_authenticated:
-        if request.user.user_type == 'tourist':
-            if 'add_review' in request.POST:
-                review_form = ReviewForm(request.POST)
-                if review_form.is_valid():
-                    review = review_form.save(commit=False)
-                    review.tour = tour
-                    review.tourist = request.user
-                    review.save()
-                    messages.success(request, 'Review added successfully!')
-                    return redirect('tour_detail', tour_id=tour.id)
-            else:
+        if 'add_review' in request.POST:
+            # Handle review submission
+            rating = request.POST.get('rating')
+            comment = request.POST.get('comment')
+            if rating and comment:
+                review = Review.objects.create(
+                    tour=tour,
+                    tourist=request.user,
+                    rating=int(rating),
+                    comment=comment
+                )
+                messages.success(request, 'Review added successfully!')
+                return redirect('tour_detail', tour_id=tour.id)
+        else:
+            # Handle booking submission
+            if request.user.user_type == 'tourist':
                 booking_form = BookingForm(request.POST)
                 if booking_form.is_valid():
                     booking = booking_form.save(commit=False)
@@ -113,16 +121,15 @@ def tour_detail(request, tour_id):
                         booking.transaction_id = f"TXN{str(uuid.uuid4())[:8].upper()}"
                     
                     booking.save()
-                    messages.success(request, 'Tour booked successfully! Payment completed.')
+                    messages.success(request, f'Tour booked successfully! Payment completed via {booking.get_payment_method_display()}.')
                     return redirect('dashboard')
-        else:
-            messages.error(request, 'Only tourists can book tours.')
+            else:
+                messages.error(request, 'Only tourists can book tours.')
     
     else:
         booking_form = BookingForm()
-        review_form = ReviewForm()
     
-    # Get related tours
+    # Get related tours (only published ones)
     related_tours = Tour.objects.filter(
         department=tour.department, 
         status='published',
@@ -135,7 +142,6 @@ def tour_detail(request, tour_id):
         'average_rating': average_rating,
         'review_count': review_count,
         'booking_form': booking_form,
-        'review_form': review_form,
         'in_wishlist': in_wishlist,
         'related_tours': related_tours,
     })
@@ -151,6 +157,8 @@ def create_tour(request):
         if form.is_valid():
             tour = form.save(commit=False)
             tour.organizer = request.user
+            # Tours are created as draft by default
+            tour.status = 'draft'
             
             # Auto-assign department from organizer's profile
             from accounts.models import OrganizerProfile
@@ -168,7 +176,7 @@ def create_tour(request):
                 pass
             
             tour.save()
-            messages.success(request, 'Tour created successfully!')
+            messages.success(request, 'Tour created successfully! It is now in draft mode. Publish it to make it visible to users.')
             return redirect('dashboard')
     else:
         form = TourForm()

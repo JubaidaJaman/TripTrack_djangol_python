@@ -44,6 +44,30 @@ def dashboard(request):
         # Get organizer profile
         organizer_profile = OrganizerProfile.objects.get(user=user)
         
+        # Add publishing functionality for organizers
+        if request.method == 'POST':
+            if 'publish_tour' in request.POST:
+                tour_id = request.POST.get('tour_id')
+                try:
+                    tour_to_publish = Tour.objects.get(id=tour_id, organizer=user)
+                    tour_to_publish.status = 'published'
+                    tour_to_publish.save()
+                    messages.success(request, f'Tour "{tour_to_publish.title}" published successfully!')
+                except Tour.DoesNotExist:
+                    messages.error(request, 'Tour not found!')
+                return redirect('dashboard')
+            
+            elif 'unpublish_tour' in request.POST:
+                tour_id = request.POST.get('tour_id')
+                try:
+                    tour_to_unpublish = Tour.objects.get(id=tour_id, organizer=user)
+                    tour_to_unpublish.status = 'draft'
+                    tour_to_unpublish.save()
+                    messages.success(request, f'Tour "{tour_to_unpublish.title}" unpublished successfully!')
+                except Tour.DoesNotExist:
+                    messages.error(request, 'Tour not found!')
+                return redirect('dashboard')
+        
         context = {
             'tours': tours,
             'bookings': bookings,
@@ -98,6 +122,29 @@ def dashboard(request):
                         messages.error(request, 'You cannot change your own role!')
                 except CustomUser.DoesNotExist:
                     messages.error(request, 'User not found!')
+                return redirect('dashboard')
+            
+            # ADD TOUR PUBLISHING FUNCTIONALITY
+            elif 'publish_tour' in request.POST:
+                tour_id = request.POST.get('tour_id')
+                try:
+                    tour_to_publish = Tour.objects.get(id=tour_id)
+                    tour_to_publish.status = 'published'
+                    tour_to_publish.save()
+                    messages.success(request, f'Tour "{tour_to_publish.title}" published successfully!')
+                except Tour.DoesNotExist:
+                    messages.error(request, 'Tour not found!')
+                return redirect('dashboard')
+            
+            elif 'unpublish_tour' in request.POST:
+                tour_id = request.POST.get('tour_id')
+                try:
+                    tour_to_unpublish = Tour.objects.get(id=tour_id)
+                    tour_to_unpublish.status = 'draft'
+                    tour_to_unpublish.save()
+                    messages.success(request, f'Tour "{tour_to_unpublish.title}" unpublished successfully!')
+                except Tour.DoesNotExist:
+                    messages.error(request, 'Tour not found!')
                 return redirect('dashboard')
         
         context = {
