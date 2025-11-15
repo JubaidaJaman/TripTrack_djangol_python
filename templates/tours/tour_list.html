@@ -76,7 +76,8 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Free Tours:</span>
-                        <strong>{{ tours.filter|default:tours|length }}</strong>
+                        <!-- FIXED: Use the variable passed from view -->
+                        <strong>{{ free_tours_count }}</strong>
                     </div>
                     <div class="d-flex justify-content-between">
                         <span>Upcoming:</span>
@@ -142,10 +143,10 @@
                         <!-- Wishlist Button -->
                         {% if user.is_authenticated and user.user_type == 'tourist' %}
                         <div class="position-absolute top-0 end-0 m-2">
-                            <button class="wishlist-btn {% if tour in user_wishlist %}active{% endif %}" 
+                            <button class="wishlist-btn {% if tour.id in user_wishlist %}active{% endif %}" 
                                     data-tour="{{ tour.id }}" 
                                     onclick="toggleWishlist({{ tour.id }})">
-                                <i class="{% if tour in user_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
+                                <i class="{% if tour.id in user_wishlist %}fas{% else %}far{% endif %} fa-heart"></i>
                             </button>
                         </div>
                         {% endif %}
@@ -163,7 +164,7 @@
                             <!-- Organizer Info -->
                             <div class="mb-2">
                                 <small class="text-muted">
-                                    <i class="fas fa-user me-1"></i>By {{ tour.organizer.organizerprofile.department }}
+                                    <i class="fas fa-user me-1"></i>By {{ tour.organizer.username }}
                                 </small>
                             </div>
 

@@ -4,14 +4,13 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-your-secret-key-here'
+SECRET_KEY = 'django-insecure-your-secret-key-here-change-this-in-production'
 
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# FIXED: Added all required Django apps
-# uap_tours/settings.py
+# ONLY ESSENTIAL APPS - NO THIRD PARTY
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -20,25 +19,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third party apps
-    'crispy_forms',
-    'crispy_bootstrap5',
-    'django_filters',
-    'widget_tweaks',
-    'notifications',  # ADD THIS
-    
-    # Your apps
+    # YOUR APPS ONLY
     'accounts',
-    'tours',
+    'tours', 
     'dashboard',
 ]
 
-
-# Crispy Forms Configuration
-#CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
-#CRISPY_TEMPLATE_PACK = "bootstrap5"
-
-# FIXED: Added all required middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -62,6 +48,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',
             ],
         },
     },

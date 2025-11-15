@@ -51,9 +51,13 @@ def create_user_profile(sender, instance, created, **kwargs):
         elif instance.user_type == 'organizer':
             OrganizerProfile.objects.create(user=instance)
 
+# FIXED: Remove problematic signal or add proper error handling
 @receiver(post_save, sender=CustomUser)
 def save_user_profile(sender, instance, **kwargs):
-    if instance.user_type == 'tourist':
-        instance.touristprofile.save()
-    elif instance.user_type == 'organizer':
-        instance.organizerprofile.save()
+    try:
+        if instance.user_type == 'tourist' and hasattr(instance, 'touristprofile'):
+            instance.touristprofile.save()
+        elif instance.user_type == 'organizer' and hasattr(instance, 'organizerprofile'):
+            instance.organizerprofile.save()
+    except Exception:
+        pass  

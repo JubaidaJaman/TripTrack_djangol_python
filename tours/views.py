@@ -1,7 +1,7 @@
-# tours/views.py
+# tours/views.py - COMPLETE FIXED VERSION
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.db.models import Q, Avg, Count
+from django.db.models import Q, Avg
 from django.contrib import messages
 from django.http import JsonResponse
 from django.utils import timezone
@@ -11,188 +11,196 @@ import qrcode
 from io import BytesIO
 from django.core.files import File
 from django.contrib.auth import get_user_model
-from .models import Tour, UAPDepartment, Booking, Review, Wishlist, Payment, Notification, UserNotification
-from .forms import TourForm, BookingForm, ReviewForm, UAPDepartmentForm, NotificationForm, QuickReminderForm
+
+# Import ALL models from your fixed models.py
+from .models import (
+    Tour, UAPDepartment, Booking, Review, Wishlist, 
+    Payment, Notification, UserNotification
+)
+from .forms import (
+    TourForm, BookingForm, ReviewForm, UAPDepartmentForm, 
+    NotificationForm, QuickReminderForm
+)
 
 User = get_user_model()
 
+# CORE VIEWS
 def home(request):
-    # Create UAP departments if none exist
-    if UAPDepartment.objects.count() == 0:
-        departments_data = [
-            {'name': 'Computer Science & Engineering', 'code': 'CSE', 'description': 'Department of Computer Science and Engineering'},
-            {'name': 'Electrical & Electronic Engineering', 'code': 'EEE', 'description': 'Department of Electrical and Electronic Engineering'},
-            {'name': 'Business Administration', 'code': 'BBA', 'description': 'Department of Business Administration'},
-            {'name': 'English', 'code': 'ENG', 'description': 'Department of English'},
-            {'name': 'Architecture', 'code': 'ARCH', 'description': 'Department of Architecture'},
-            {'name': 'Law', 'code': 'LAW', 'description': 'Department of Law'},
-        ]
-        for dept_data in departments_data:
-            UAPDepartment.objects.create(**dept_data)
+    featured_tours = Tour.objects.filter(status='published').order_by('-created_at')[:8]
+    departments = UAPDepartment.objects.all()[:12]
+    upcoming_tours = Tour.objects.filter(
+        status='published', 
+        tour_date__gt=timezone.now()
+    ).count()
     
-    # Only show published tours
-    featured_tours = Tour.objects.filter(status='published', tour_date__gte=timezone.now())[:8]
-    departments = UAPDepartment.objects.all()
-    upcoming_tours = Tour.objects.filter(status='published', tour_date__gte=timezone.now()).count()
-    
-    return render(request, 'home.html', {
+    context = {
         'featured_tours': featured_tours,
         'departments': departments,
         'upcoming_tours': upcoming_tours,
-    })
+    }
+    return render(request, 'home.html', context)
 
 def tour_list(request):
-    # Only show published tours
-    tours = Tour.objects.filter(status='published', tour_date__gte=timezone.now())
+    tours = Tour.objects.filter(status='published')
     
     # Filtering
-    category = request.GET.get('category')
-    department_id = request.GET.get('department')
-    price_range = request.GET.get('price_range')
+    search_query = request.GET.get('search', '')
+    category_filter = request.GET.get('category', '')
+    price_range = request.GET.get('price_range', '')
+    sort_by = request.GET.get('sort', 'newest')
     
-    if category:
-        tours = tours.filter(category=category)
-    if department_id:
-        tours = tours.filter(department_id=department_id)
-    if price_range:
-        if price_range == 'free':
-            tours = tours.filter(price=0)
-        elif price_range == 'under500':
-            tours = tours.filter(price__lte=500)
-        elif price_range == '500-1000':
-            tours = tours.filter(price__range=(500, 1000))
-        elif price_range == 'over1000':
-            tours = tours.filter(price__gt=1000)
-    
-    search = request.GET.get('search')
-    if search:
+    if search_query:
         tours = tours.filter(
-            Q(title__icontains=search) | 
-            Q(description__icontains=search) |
-            Q(department__name__icontains=search)
+            Q(title__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(department__name__icontains=search_query)
         )
     
-    departments = UAPDepartment.objects.all()
-    categories = Tour.TOUR_CATEGORIES
+    if category_filter:
+        tours = tours.filter(category=category_filter)
     
-    return render(request, 'tours/tour_list.html', {
+    if price_range == 'free':
+        tours = tours.filter(price=0)
+    elif price_range == 'under500':
+        tours = tours.filter(price__lt=500)
+    elif price_range == '500-1000':
+        tours = tours.filter(price__range=(500, 1000))
+    elif price_range == 'over1000':
+        tours = tours.filter(price__gt=1000)
+    
+    # Sorting
+    if sort_by == 'price_low':
+        tours = tours.order_by('price')
+    elif sort_by == 'price_high':
+        tours = tours.order_by('-price')
+    elif sort_by == 'date':
+        tours = tours.order_by('tour_date')
+    else:  # newest
+        tours = tours.order_by('-created_at')
+    
+    # Get user wishlist for template
+    user_wishlist = []
+    if request.user.is_authenticated and request.user.user_type == 'tourist':
+        user_wishlist = Wishlist.objects.filter(tourist=request.user).values_list('tour_id', flat=True)
+    
+    categories = Tour.CATEGORY_CHOICES
+    
+    # FIXED: Calculate free tours count properly
+    free_tours_count = Tour.objects.filter(status='published', price=0).count()
+    
+    context = {
         'tours': tours,
-        'departments': departments,
         'categories': categories,
-    })
+        'user_wishlist': user_wishlist,
+        'free_tours_count': free_tours_count,  # ADD THIS LINE
+    }
+    return render(request, 'tours/tour_list.html', context)
 
 def tour_detail(request, tour_id):
     tour = get_object_or_404(Tour, id=tour_id)
     
-    # Auto-generate QR code for published tours if not exists
-    if tour.status == 'published' and not tour.qr_code:
-        try:
-            tour.generate_qr_code()
-            tour.save()
-        except Exception as e:
-            print(f"Error generating QR code: {e}")
-    
-    # Allow anyone to view tour details, but restrict booking to published tours only
-    if tour.status != 'published' and (not request.user.is_authenticated or request.user != tour.organizer):
-        messages.error(request, 'This tour is not available for booking.')
-        # Still show the tour details but disable booking
-    
-    reviews = Review.objects.filter(tour=tour)
-    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
-    review_count = reviews.count()
-    
-    # Check if user has this tour in wishlist
+    # Check if tour is in user's wishlist
     in_wishlist = False
     if request.user.is_authenticated and request.user.user_type == 'tourist':
         in_wishlist = Wishlist.objects.filter(tourist=request.user, tour=tour).exists()
     
-    if request.method == 'POST' and request.user.is_authenticated:
-        if 'add_review' in request.POST:
-            # Handle review submission
+    # Get reviews and average rating
+    reviews = Review.objects.filter(tour=tour).order_by('-created_at')
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    review_count = reviews.count()
+    
+    if request.method == 'POST':
+        if 'add_review' in request.POST and request.user.is_authenticated and request.user.user_type == 'tourist':
             rating = request.POST.get('rating')
             comment = request.POST.get('comment')
+            
             if rating and comment:
-                review = Review.objects.create(
-                    tour=tour,
+                # Check if user already reviewed this tour
+                existing_review = Review.objects.filter(tour=tour, tourist=request.user).first()
+                if existing_review:
+                    existing_review.rating = rating
+                    existing_review.comment = comment
+                    existing_review.save()
+                    messages.success(request, 'Review updated successfully!')
+                else:
+                    Review.objects.create(
+                        tour=tour,
+                        tourist=request.user,
+                        rating=rating,
+                        comment=comment
+                    )
+                    messages.success(request, 'Review added successfully!')
+                return redirect('tour_detail', tour_id=tour_id)
+        
+        elif request.user.is_authenticated and request.user.user_type == 'tourist':
+            # Handle booking
+            participants = request.POST.get('participants', 1)
+            payment_method = request.POST.get('payment_method')
+            payment_number = request.POST.get('payment_number')
+            special_requirements = request.POST.get('special_requirements', '')
+            
+            try:
+                participants = int(participants)
+                if participants > tour.available_spots:
+                    messages.error(request, f'Only {tour.available_spots} spots available!')
+                    return redirect('tour_detail', tour_id=tour_id)
+                
+                total_price = tour.price * participants
+                
+                booking = Booking.objects.create(
                     tourist=request.user,
-                    rating=int(rating),
-                    comment=comment
+                    tour=tour,
+                    participants=participants,
+                    total_price=total_price,
+                    special_requirements=special_requirements,
+                    payment_method=payment_method,
+                    payment_number=payment_number,
+                    status='confirmed' if tour.price == 0 else 'pending',
+                    payment_status='paid' if tour.price == 0 else 'pending'
                 )
-                messages.success(request, 'Review added successfully!')
-                return redirect('tour_detail', tour_id=tour.id)
-        else:
-            # Handle booking submission
-            if request.user.user_type == 'tourist':
-                booking_form = BookingForm(request.POST)
-                if booking_form.is_valid():
-                    booking = booking_form.save(commit=False)
-                    booking.tour = tour
-                    booking.tourist = request.user
-                    booking.total_price = tour.price * booking.participants
-                    
-                    # Simulate payment process
-                    if booking.payment_method:
-                        booking.payment_status = 'paid'
-                        booking.status = 'confirmed'
-                        booking.transaction_id = f"TXN{str(uuid.uuid4())[:8].upper()}"
-                    
-                    booking.save()
-                    messages.success(request, f'Tour booked successfully! Payment completed via {booking.get_payment_method_display()}.')
-                    return redirect('dashboard')
-            else:
-                messages.error(request, 'Only tourists can book tours.')
+                
+                if tour.price > 0:
+                    messages.success(request, 'Booking created! Please complete your payment.')
+                else:
+                    messages.success(request, 'Booking confirmed successfully!')
+                
+                return redirect('dashboard')
+                
+            except ValueError:
+                messages.error(request, 'Please enter a valid number of participants.')
     
-    else:
-        booking_form = BookingForm()
-    
-    # Get related tours (only published ones)
-    related_tours = Tour.objects.filter(
-        department=tour.department, 
-        status='published',
-        tour_date__gte=timezone.now()
-    ).exclude(id=tour.id)[:4]
-    
-    return render(request, 'tours/tour_detail.html', {
+    context = {
         'tour': tour,
+        'in_wishlist': in_wishlist,
         'reviews': reviews,
         'average_rating': average_rating,
         'review_count': review_count,
-        'booking_form': booking_form,
-        'in_wishlist': in_wishlist,
-        'related_tours': related_tours,
-    })
+    }
+    return render(request, 'tours/tour_detail.html', context)
 
 @login_required
 def create_tour(request):
     if request.user.user_type != 'organizer':
         messages.error(request, 'Only organizers can create tours.')
-        return redirect('home')
+        return redirect('dashboard')
     
     if request.method == 'POST':
         form = TourForm(request.POST, request.FILES)
         if form.is_valid():
             tour = form.save(commit=False)
             tour.organizer = request.user
-            # Tours are created as draft by default
-            tour.status = 'draft'
             
             # Auto-assign department from organizer's profile
-            from accounts.models import OrganizerProfile
             try:
-                organizer_profile = OrganizerProfile.objects.get(user=request.user)
-                department, created = UAPDepartment.objects.get_or_create(
-                    name=organizer_profile.department,
-                    defaults={
-                        'code': organizer_profile.department.split()[0],
-                        'description': f'{organizer_profile.department} at UAP'
-                    }
-                )
-                tour.department = department
-            except OrganizerProfile.DoesNotExist:
+                organizer_profile = request.user.organizerprofile
+                tour.department = UAPDepartment.objects.filter(
+                    name__icontains=organizer_profile.department
+                ).first()
+            except:
                 pass
             
             tour.save()
-            messages.success(request, 'Tour created successfully! It is now in draft mode. Publish it to make it visible to users.')
+            messages.success(request, 'Tour created successfully!')
             return redirect('dashboard')
     else:
         form = TourForm()
@@ -200,77 +208,91 @@ def create_tour(request):
     return render(request, 'tours/create_tour.html', {'form': form})
 
 @login_required
+@require_POST
 def wishlist_toggle(request, tour_id):
     if request.user.user_type != 'tourist':
-        return JsonResponse({'error': 'Only tourists can add to wishlist'}, status=403)
+        return JsonResponse({'error': 'Only tourists can use wishlist'}, status=403)
     
     tour = get_object_or_404(Tour, id=tour_id)
     wishlist_item, created = Wishlist.objects.get_or_create(
-        tourist=request.user, 
+        tourist=request.user,
         tour=tour
     )
     
     if not created:
         wishlist_item.delete()
-        return JsonResponse({'added': False, 'message': 'Removed from wishlist'})
-    else:
-        return JsonResponse({'added': True, 'message': 'Added to wishlist'})
+        return JsonResponse({
+            'added': False,
+            'message': 'Removed from wishlist'
+        })
+    
+    return JsonResponse({
+        'added': True,
+        'message': 'Added to wishlist'
+    })
 
 @login_required
 def my_wishlist(request):
     if request.user.user_type != 'tourist':
-        messages.error(request, 'Only tourists have wishlists.')
-        return redirect('home')
+        messages.error(request, 'Only tourists can view wishlist.')
+        return redirect('dashboard')
     
     wishlist_tours = Tour.objects.filter(
         wishlist__tourist=request.user,
         status='published'
     )
     
-    return render(request, 'tours/wishlist.html', {'wishlist_tours': wishlist_tours})
+    return render(request, 'tours/wishlist.html', {
+        'wishlist_tours': wishlist_tours
+    })
 
 @login_required
 def my_reviews(request):
     if request.user.user_type != 'tourist':
-        messages.error(request, 'Only tourists can write reviews.')
-        return redirect('home')
+        messages.error(request, 'Only tourists can view reviews.')
+        return redirect('dashboard')
     
     reviews = Review.objects.filter(tourist=request.user).order_by('-created_at')
-    return render(request, 'tours/my_reviews.html', {'reviews': reviews})
+    
+    return render(request, 'tours/my_reviews.html', {
+        'reviews': reviews
+    })
 
 def department_tours(request, department_id):
     department = get_object_or_404(UAPDepartment, id=department_id)
     tours = Tour.objects.filter(
-        department=department, 
-        status='published',
-        tour_date__gte=timezone.now()
-    )
+        department=department,
+        status='published'
+    ).order_by('-created_at')
     
     return render(request, 'tours/department_tours.html', {
         'department': department,
-        'tours': tours,
+        'tours': tours
     })
 
-# QR Code View Function
-@require_POST
 @login_required
+@require_POST
 def generate_qr_code(request, tour_id):
-    tour = get_object_or_404(Tour, id=tour_id)
-    
-    # Check if user is the organizer or developer
-    if request.user != tour.organizer and request.user.user_type != 'developer':
-        return JsonResponse({'success': False, 'error': 'Permission denied'})
-    
     try:
+        tour = get_object_or_404(Tour, id=tour_id)
+        
+        # Check permission - only organizer or developer can generate QR
+        if request.user != tour.organizer and request.user.user_type != 'developer':
+            return JsonResponse({'success': False, 'error': 'Permission denied'})
+        
         # Delete old QR code if exists
         if tour.qr_code:
             tour.qr_code.delete(save=False)
         
         # Generate new QR code
-        tour.generate_qr_code()
+        filename = tour.generate_qr_code()
         tour.save()
         
-        return JsonResponse({'success': True, 'message': 'QR code generated successfully'})
+        return JsonResponse({
+            'success': True,
+            'message': 'QR Code generated successfully!',
+            'qr_code_url': tour.qr_code.url
+        })
     
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
@@ -287,28 +309,25 @@ def send_notification(request):
         if form.is_valid():
             notification = form.save(commit=False)
             notification.organizer = request.user
-            
-            # Handle immediate sending
-            if not notification.scheduled_send or notification.scheduled_send <= timezone.now():
-                notification.is_sent = True
+            notification.is_sent = True
             
             notification.save()
-            form.save_m2m()  # Save many-to-many relationships
             
-            # Create UserNotification records for target users
-            if notification.send_to_all_tourists:
-                tourists = User.objects.filter(user_type='tourist')
-            else:
-                tourists = notification.target_users.all()
+            # Get target users and create UserNotification records
+            target_users = notification.get_target_users()
+            notifications_created = 0
             
-            for tourist in tourists:
+            for tourist in target_users:
                 UserNotification.objects.get_or_create(
                     user=tourist,
                     notification=notification
                 )
+                notifications_created += 1
             
-            messages.success(request, f'Notification sent to {tourists.count()} tourists!')
+            messages.success(request, f'Notification sent to {notifications_created} tourists!')
             return redirect('organizer_notifications')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = NotificationForm(organizer=request.user)
     
@@ -340,22 +359,21 @@ def send_quick_reminder(request):
                 is_sent=True
             )
             
-            # Get tourists who booked this tour
-            booked_tourists = User.objects.filter(
-                booking__tour=tour,
-                booking__status='confirmed'
-            ).distinct()
+            # Get tourists who booked this tour and create UserNotification records
+            target_users = notification.get_target_users()
+            notifications_created = 0
             
-            notification.target_users.set(booked_tourists)
-            
-            # Create UserNotification records
-            for tourist in booked_tourists:
+            for tourist in target_users:
                 UserNotification.objects.create(
                     user=tourist,
                     notification=notification
                 )
+                notifications_created += 1
             
-            return JsonResponse({'success': True, 'message': f'Quick reminder sent to {booked_tourists.count()} tourists!'})
+            return JsonResponse({
+                'success': True, 
+                'message': f'Quick reminder sent to {notifications_created} tourists!'
+            })
         
         except Tour.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Tour not found'})
@@ -400,11 +418,12 @@ def mark_notification_read(request, notification_id):
 
 @login_required
 def mark_all_notifications_read(request):
-    UserNotification.objects.filter(user=request.user, is_read=False).update(
-        is_read=True,
-        read_at=timezone.now()
-    )
-    messages.success(request, 'All notifications marked as read!')
+    unread_notifications = UserNotification.objects.filter(user=request.user, is_read=False)
+    unread_count = unread_notifications.count()
+    
+    unread_notifications.update(is_read=True, read_at=timezone.now())
+    
+    messages.success(request, f'Marked {unread_count} notifications as read!')
     return redirect('my_notifications')
 
 @login_required
@@ -414,7 +433,6 @@ def get_unread_count(request):
         return JsonResponse({'unread_count': unread_count})
     return JsonResponse({'unread_count': 0})
 
-# Helper function to get recent notifications for dropdown
 @login_required
 def get_recent_notifications(request):
     if request.user.is_authenticated:

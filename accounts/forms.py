@@ -5,8 +5,8 @@ from .models import CustomUser, TouristProfile, OrganizerProfile
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True)
     phone = forms.CharField(max_length=20, required=False)
-    department = forms.CharField(required=False, help_text="Required for organizers")
     
+    # FIXED: Remove department field from user creation form
     class Meta:
         model = CustomUser
         fields = ('username', 'email', 'user_type', 'phone', 'password1', 'password2')
@@ -14,11 +14,8 @@ class CustomUserCreationForm(UserCreationForm):
     def clean(self):
         cleaned_data = super().clean()
         user_type = cleaned_data.get('user_type')
-        department = cleaned_data.get('department')
         
-        if user_type == 'organizer' and not department:
-            raise forms.ValidationError("Department name is required for organizers")
-        
+        # FIXED: Remove department validation since it's not in the form anymore
         return cleaned_data
 
 class TouristProfileForm(forms.ModelForm):

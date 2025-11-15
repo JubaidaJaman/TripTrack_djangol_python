@@ -1,4 +1,3 @@
-<!-- templates/tours/tour_detail.html -->
 {% extends 'base.html' %}
 
 {% block content %}
@@ -13,7 +12,7 @@
                             <h2 class="card-title mb-1">{{ tour.title }}</h2>
                             <span class="badge bg-primary mb-2">{{ tour.get_category_display }}</span>
                             <p class="text-muted mb-0">
-                                <i class="fas fa-user me-1"></i>Organized by: {{ tour.organizer.organizerprofile.department }}
+                                <i class="fas fa-user me-1"></i>Organized by: {{ tour.organizer.username }}
                             </p>
                         </div>
                         {% if user.is_authenticated and user.user_type == 'tourist' %}
@@ -183,78 +182,7 @@
                                        onchange="updateTotalPrice(this.value)">
                                 <small class="text-muted">Available spots: {{ tour.available_spots }}</small>
                             </div>
-        <!-- Add this to templates/tours/tour_detail.html in the booking sidebar (col-md-4) -->
-<!-- QR Code Card -->
-<div class="card mt-4">
-    <div class="card-body text-center">
-        <h6><i class="fas fa-qrcode me-2 text-primary"></i>Quick Book QR Code</h6>
-        
-        {% if tour.qr_code %}
-            <img src="{{ tour.qr_code.url }}" alt="QR Code for {{ tour.title }}" 
-                 class="img-fluid mb-3 qr-code-large" style="max-width: 200px; border: 2px solid #dee2e6; border-radius: 8px; padding: 10px; background: white;">
-            <p class="small text-muted mb-2">
-                Scan to view tour details and book instantly
-            </p>
-            <div class="btn-group w-100">
-                <a href="{{ tour.qr_code.url }}" download class="btn btn-outline-primary btn-sm">
-                    <i class="fas fa-download me-1"></i>Download QR
-                </a>
-                {% if user.is_authenticated and user == tour.organizer or user.user_type == 'developer' %}
-                <button onclick="generateNewQR({{ tour.id }})" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-sync me-1"></i>Regenerate
-                </button>
-                {% endif %}
-            </div>
-        {% else %}
-            <div class="bg-light rounded p-4 mb-3">
-                <i class="fas fa-qrcode fa-3x text-muted mb-3"></i>
-                <p class="small text-muted">QR Code not generated yet</p>
-            </div>
-            {% if user.is_authenticated and user == tour.organizer or user.user_type == 'developer' %}
-            <button onclick="generateNewQR({{ tour.id }})" class="btn btn-primary btn-sm w-100">
-                <i class="fas fa-plus me-1"></i>Generate QR Code
-            </button>
-            {% endif %}
-        {% endif %}
-    </div>
-</div>
-
-<style>
-.qr-code-large {
-    transition: transform 0.3s ease;
-}
-.qr-code-large:hover {
-    transform: scale(1.05);
-}
-</style>
-
-<script>
-// QR Code Generation Function
-function generateNewQR(tourId) {
-    if (!confirm('Generate new QR code for this tour?')) return;
-    
-    fetch(`/tours/generate-qr/${tourId}/`, {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': '{{ csrf_token }}',
-            'Content-Type': 'application/json',
-        },
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('QR Code generated successfully! Page will reload to show the QR code.');
-            location.reload(); // Reload to show new QR code
-        } else {
-            alert('Error generating QR code: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error generating QR code. Please try again.');
-    });
-}
-</script>
+                            
                             <!-- Payment Method -->
                             <div class="mb-3">
                                 <label for="payment_method" class="form-label">Payment Method *</label>
@@ -280,38 +208,6 @@ function generateNewQR(tourId) {
                                 <label for="special_requirements" class="form-label">Special Requirements</label>
                                 <textarea class="form-control" id="special_requirements" name="special_requirements" 
                                           rows="3" placeholder="Any special requirements or notes..."></textarea>
-                            </div>
-
-                            <!-- Payment Instructions -->
-                            <div class="alert alert-info" id="payment_instructions" style="display: none;">
-                                <h6><i class="fas fa-info-circle me-2"></i>Payment Instructions:</h6>
-                                <div id="bkash_instructions" style="display: none;">
-                                    <p><strong>bKash Payment:</strong></p>
-                                    <ol class="small">
-                                        <li>Go to your bKash app</li>
-                                        <li>Send money to: <strong>017XXXXXXXX</strong></li>
-                                        <li>Enter amount: <strong id="bkash_amount">0</strong> ৳</li>
-                                        <li>Use reference: <strong>UAP{{ tour.id }}</strong></li>
-                                    </ol>
-                                </div>
-                                <div id="nagad_instructions" style="display: none;">
-                                    <p><strong>Nagad Payment:</strong></p>
-                                    <ol class="small">
-                                        <li>Go to your Nagad app</li>
-                                        <li>Send money to: <strong>017XXXXXXXX</strong></li>
-                                        <li>Enter amount: <strong id="nagad_amount">0</strong> ৳</li>
-                                        <li>Use reference: <strong>UAP{{ tour.id }}</strong></li>
-                                    </ol>
-                                </div>
-                                <div id="rocket_instructions" style="display: none;">
-                                    <p><strong>Rocket Payment:</strong></p>
-                                    <ol class="small">
-                                        <li>Go to your Rocket app</li>
-                                        <li>Send money to: <strong>017XXXXXXXX</strong></li>
-                                        <li>Enter amount: <strong id="rocket_amount">0</strong> ৳</li>
-                                        <li>Use reference: <strong>UAP{{ tour.id }}</strong></li>
-                                    </ol>
-                                </div>
                             </div>
 
                             <div class="alert alert-success">
@@ -358,15 +254,10 @@ function generateNewQR(tourId) {
             <div class="card mt-4">
                 <div class="card-body">
                     <h6><i class="fas fa-user-tie me-2"></i>Organizer Information</h6>
-                    <p class="mb-2"><strong>Department:</strong> {{ tour.organizer.organizerprofile.department }}</p>
                     <p class="mb-2"><strong>Organizer:</strong> {{ tour.organizer.username }}</p>
-                    {% if tour.organizer.organizerprofile.bio %}
-                    <p class="mb-2"><strong>About:</strong> {{ tour.organizer.organizerprofile.bio }}</p>
-                    {% endif %}
-                    {% if tour.organizer.organizerprofile.is_verified %}
-                    <span class="badge bg-success">
-                        <i class="fas fa-check-circle me-1"></i>Verified UAP Organizer
-                    </span>
+                    <p class="mb-2"><strong>Email:</strong> {{ tour.organizer.email }}</p>
+                    {% if tour.organizer.phone %}
+                    <p class="mb-2"><strong>Phone:</strong> {{ tour.organizer.phone }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -461,39 +352,17 @@ function updateTotalPrice(participants) {
     } else {
         totalPriceElement.textContent = totalPrice + ' ৳';
     }
-    
-    // Update payment instructions amounts
-    document.getElementById('bkash_amount').textContent = totalPrice;
-    document.getElementById('nagad_amount').textContent = totalPrice;
-    document.getElementById('rocket_amount').textContent = totalPrice;
 }
 
 function togglePaymentNumber() {
     const paymentMethod = document.getElementById('payment_method').value;
     const paymentNumberField = document.getElementById('payment_number_field');
-    const paymentInstructions = document.getElementById('payment_instructions');
-    
-    // Hide all instructions first
-    document.getElementById('bkash_instructions').style.display = 'none';
-    document.getElementById('nagad_instructions').style.display = 'none';
-    document.getElementById('rocket_instructions').style.display = 'none';
     
     // Show payment number field for mobile payments
     if (['bkash', 'nagad', 'rocket'].includes(paymentMethod)) {
         paymentNumberField.style.display = 'block';
-        paymentInstructions.style.display = 'block';
-        
-        // Show specific instructions
-        if (paymentMethod === 'bkash') {
-            document.getElementById('bkash_instructions').style.display = 'block';
-        } else if (paymentMethod === 'nagad') {
-            document.getElementById('nagad_instructions').style.display = 'block';
-        } else if (paymentMethod === 'rocket') {
-            document.getElementById('rocket_instructions').style.display = 'block';
-        }
     } else {
         paymentNumberField.style.display = 'none';
-        paymentInstructions.style.display = 'none';
     }
 }
 
@@ -503,8 +372,6 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTotalPrice(initialParticipants);
     togglePaymentNumber();
 });
-
-
 
 // Wishlist functionality
 function toggleWishlist(tourId) {

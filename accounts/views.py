@@ -7,60 +7,27 @@ from .models import CustomUser, TouristProfile, OrganizerProfile
 
 def register(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        password1 = request.POST.get('password1')
-        password2 = request.POST.get('password2')
-        user_type = request.POST.get('user_type')
-        phone = request.POST.get('phone')
-        department = request.POST.get('department')
-        
-        # Basic validation
-        if not username or not email or not password1 or not password2:
-            messages.error(request, 'Please fill all required fields.')
-            return render(request, 'accounts/register.html')
-        
-        if password1 != password2:
-            messages.error(request, 'Passwords do not match.')
-            return render(request, 'accounts/register.html')
-        
-        if CustomUser.objects.filter(username=username).exists():
-            messages.error(request, 'Username already exists.')
-            return render(request, 'accounts/register.html')
-        
-        if CustomUser.objects.filter(email=email).exists():
-            messages.error(request, 'Email already exists.')
-            return render(request, 'accounts/register.html')
-        
-        # Create user
-        try:
-            user = CustomUser.objects.create_user(
-                username=username,
-                email=email,
-                password=password1,
-                user_type=user_type,
-                phone=phone
-            )
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
             
             # Create profile based on user type
-            if user_type == 'tourist':
+            if user.user_type == 'tourist':
                 TouristProfile.objects.create(user=user)
-            elif user_type == 'organizer':
-                OrganizerProfile.objects.create(
-                    user=user, 
-                    department=department or 'CSE Department'
-                )
+            elif user.user_type == 'organizer':
+                # FIXED: Use default department for organizer
+                OrganizerProfile.objects.create(user=user, department='CSE Department')
             
             # Log the user in
             login(request, user)
             messages.success(request, f'Registration successful! Welcome to UAP TripTrack, {user.username}!')
             return redirect('dashboard')
-            
-        except Exception as e:
-            messages.error(request, f'Error creating account: {str(e)}')
-            return render(request, 'accounts/register.html')
+        else:
+            return render(request, 'accounts/register.html', {'form': form})
+    else:
+        form = CustomUserCreationForm()
     
-    return render(request, 'accounts/register.html')
+    return render(request, 'accounts/register.html', {'form': form})
 
 def user_login(request):
     if request.method == 'POST':

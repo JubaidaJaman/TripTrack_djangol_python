@@ -1,6 +1,5 @@
 <!-- templates/notifications/send_notification.html -->
 {% extends 'base.html' %}
-{% load widget_tweaks %}
 
 {% block content %}
 <div class="container mt-4">
@@ -18,50 +17,39 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Notification Type</label>
-                                    {{ form.notification_type|add_class:"form-select" }}
+                                    {{ form.notification_type }}
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">Related Tour (Optional)</label>
-                                    {{ form.tour|add_class:"form-select" }}
+                                    {{ form.tour }}
                                 </div>
                             </div>
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Title</label>
-                            {{ form.title|add_class:"form-control"|attr:"placeholder:Enter notification title..." }}
+                            {{ form.title }}
                         </div>
                         
                         <div class="mb-3">
                             <label class="form-label">Message</label>
-                            {{ form.message|add_class:"form-control"|attr:"placeholder:Enter your notification message..."|attr:"rows:4" }}
+                            {{ form.message }}
                         </div>
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        {{ form.send_to_all_tourists|add_class:"form-check-input" }}
-                                        <label class="form-check-label">Send to all tourists</label>
-                                    </div>
-                                    <small class="form-text text-muted">If unchecked, select specific tourists below</small>
-                                </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.send_to_all_tourists }}
+                                <label class="form-check-label">Send to all tourists</label>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Schedule Send (Optional)</label>
-                                    {{ form.scheduled_send|add_class:"form-control"|attr:"type:datetime-local" }}
-                                    <small class="form-text text-muted">Leave empty for immediate sending</small>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3" id="target-users-section">
-                            <label class="form-label">Select Tourists</label>
-                            {{ form.target_users|add_class:"form-select"|attr:"size:5" }}
-                            <small class="form-text text-muted">Hold Ctrl to select multiple tourists</small>
+                            <small class="form-text text-muted">
+                                {% if form.tour.value %}
+                                    If unchecked, will send only to tourists who booked "{{ form.tour.value }}"
+                                {% else %}
+                                    If unchecked, will send to all tourists
+                                {% endif %}
+                            </small>
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -73,47 +61,7 @@
                     </form>
                 </div>
             </div>
-            
-            <!-- Quick Tips -->
-            <div class="card mt-4">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Notification Tips</h6>
-                </div>
-                <div class="card-body">
-                    <ul class="mb-0">
-                        <li><strong>Reminders:</strong> Perfect for upcoming tour dates and meeting times</li>
-                        <li><strong>Announcements:</strong> Great for new tours or special offers</li>
-                        <li><strong>Updates:</strong> Use for tour itinerary changes or important information</li>
-                        <li><strong>Cancellations:</strong> Important for notifying about cancelled tours</li>
-                        <li><strong>Promotions:</strong> Ideal for discounts and special deals</li>
-                    </ul>
-                </div>
-            </div>
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const sendToAllCheckbox = document.querySelector('#id_send_to_all_tourists');
-    const targetUsersSection = document.getElementById('target-users-section');
-    
-    function toggleTargetUsers() {
-        if (sendToAllCheckbox.checked) {
-            targetUsersSection.style.display = 'none';
-        } else {
-            targetUsersSection.style.display = 'block';
-        }
-    }
-    
-    sendToAllCheckbox.addEventListener('change', toggleTargetUsers);
-    toggleTargetUsers(); // Initial state
-});
-</script>
-
-<style>
-.form-select[multiple] {
-    height: 120px;
-}
-</style>
 {% endblock %}

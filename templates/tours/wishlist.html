@@ -21,17 +21,33 @@
                             <i class="fas fa-university fa-3x text-white"></i>
                         </div>
                         {% endif %}
+                        
+                        <!-- Remove from wishlist button -->
+                        <div class="position-absolute top-0 end-0 m-2">
+                            <button class="wishlist-btn active" 
+                                    data-tour="{{ tour.id }}" 
+                                    onclick="toggleWishlist({{ tour.id }})">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+                        
                         <div class="card-body">
                             <span class="badge bg-primary mb-2">{{ tour.get_category_display }}</span>
                             <h5 class="card-title">{{ tour.title }}</h5>
                             <p class="card-text">{{ tour.description|truncatewords:15 }}</p>
                             <div class="mb-2">
                                 <small class="text-muted">
-                                    <i class="fas fa-university me-1"></i>{{ tour.department.name }}
+                                    <i class="fas fa-user me-1"></i>By {{ tour.organizer.username }}
                                 </small>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="h5 price-taka">{{ tour.price }} ৳</span>
+                                <span class="h5 price-taka">
+                                    {% if tour.price == 0 %}
+                                        FREE
+                                    {% else %}
+                                        {{ tour.price }} ৳
+                                    {% endif %}
+                                </span>
                                 <a href="{% url 'tour_detail' tour.id %}" class="btn btn-primary btn-sm">Details</a>
                             </div>
                         </div>
@@ -56,4 +72,54 @@
         </div>
     </div>
 </div>
+
+<style>
+.wishlist-btn {
+    border: none;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wishlist-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.wishlist-btn.active {
+    color: #dc3545;
+}
+</style>
+
+<script>
+function toggleWishlist(tourId) {
+    fetch(`/tours/wishlist/toggle/${tourId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.added) {
+            // Remove from UI
+            const tourCard = document.querySelector(`[data-tour="${tourId}"]`).closest('.col-lg-3');
+            tourCard.remove();
+            
+            // Show message if wishlist is empty
+            if (document.querySelectorAll('.tour-card').length === 0) {
+                location.reload();
+            }
+        }
+    });
+}
+</script>
 {% endblock %}

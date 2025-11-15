@@ -12,83 +12,46 @@
                     <span class="badge bg-danger ms-2">{{ unread_count }} unread</span>
                     {% endif %}
                 </h2>
-                <div>
-                    {% if unread_count > 0 %}
-                    <a href="{% url 'mark_all_notifications_read' %}" class="btn btn-outline-success">
-                        <i class="fas fa-check-double me-2"></i>Mark All as Read
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary ms-2">
-                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
-                    </a>
-                </div>
+                {% if unread_count > 0 %}
+                <a href="{% url 'mark_all_notifications_read' %}" class="btn btn-outline-success">
+                    <i class="fas fa-check-double me-2"></i>Mark All as Read
+                </a>
+                {% endif %}
             </div>
             
             {% if user_notifications %}
             <div class="card">
-                <div class="card-header bg-light">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h5 class="mb-0">All Notifications</h5>
-                        </div>
-                        <div class="col-auto">
-                            <span class="badge bg-{% if unread_count > 0 %}warning{% else %}success{% endif %}">
-                                {{ unread_count }} unread of {{ user_notifications.count }} total
-                            </span>
-                        </div>
-                    </div>
-                </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
                         {% for user_notification in user_notifications %}
-                        <div class="list-group-item {% if not user_notification.is_read %}bg-light border-start border-primary border-3{% endif %}">
+                        <div class="list-group-item {% if not user_notification.is_read %}bg-light{% endif %}">
                             <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1 me-3">
+                                <div class="flex-grow-1">
                                     <div class="d-flex align-items-center mb-2">
                                         <h6 class="mb-0 me-3">{{ user_notification.notification.title }}</h6>
-                                        <span class="badge bg-{% if user_notification.notification.notification_type == 'reminder' %}warning{% elif user_notification.notification.notification_type == 'announcement' %}info{% elif user_notification.notification.notification_type == 'update' %}primary{% elif user_notification.notification.notification_type == 'cancellation' %}danger{% else %}secondary{% endif %} me-2">
+                                        <span class="badge bg-{% if user_notification.notification.notification_type == 'reminder' %}warning{% elif user_notification.notification.notification_type == 'announcement' %}info{% else %}secondary{% endif %}">
                                             {{ user_notification.notification.get_notification_type_display }}
                                         </span>
                                         {% if not user_notification.is_read %}
-                                        <span class="badge bg-danger">
-                                            <i class="fas fa-star me-1"></i>New
-                                        </span>
+                                        <span class="badge bg-danger ms-2">New</span>
                                         {% endif %}
                                     </div>
                                     <p class="mb-2">{{ user_notification.notification.message }}</p>
-                                    <div class="d-flex flex-wrap gap-3">
-                                        <small class="text-muted">
-                                            <i class="fas fa-user me-1"></i>From: {{ user_notification.notification.organizer.organizerprofile.department }}
-                                        </small>
-                                        {% if user_notification.notification.tour %}
-                                        <small class="text-muted">
-                                            <i class="fas fa-map-marker-alt me-1"></i>Tour: 
-                                            <a href="{% url 'tour_detail' user_notification.notification.tour.id %}" class="text-decoration-none">
-                                                {{ user_notification.notification.tour.title }}
-                                            </a>
-                                        </small>
-                                        {% endif %}
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock me-1"></i>{{ user_notification.created_at|timesince }} ago
-                                        </small>
-                                        {% if user_notification.is_read %}
-                                        <small class="text-muted">
-                                            <i class="fas fa-check me-1"></i>Read: {{ user_notification.read_at|date:"M d, H:i" }}
-                                        </small>
-                                        {% endif %}
-                                    </div>
+                                    <small class="text-muted">
+                                        From: {{ user_notification.notification.organizer.organizerprofile.department }} • 
+                                        {{ user_notification.created_at|timesince }} ago
+                                    </small>
                                 </div>
-                                <div class="flex-shrink-0">
+                                <div class="ms-3">
                                     {% if not user_notification.is_read %}
                                     <button onclick="markAsRead({{ user_notification.id }})" 
-                                            class="btn btn-sm btn-success"
-                                            title="Mark as Read">
-                                        <i class="fas fa-check me-1"></i> Mark Read
+                                            class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-check"></i> Mark Read
                                     </button>
                                     {% else %}
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i> Read
-                                    </span>
+                                    <small class="text-muted">
+                                        <i class="fas fa-check text-success"></i> Read
+                                    </small>
                                     {% endif %}
                                 </div>
                             </div>
@@ -97,26 +60,11 @@
                     </div>
                 </div>
             </div>
-            
-            <!-- Empty state for no unread notifications -->
-            {% if unread_count == 0 and user_notifications %}
-            <div class="text-center mt-4">
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle fa-2x mb-3"></i>
-                    <h5>All caught up!</h5>
-                    <p class="mb-0">You've read all your notifications.</p>
-                </div>
-            </div>
-            {% endif %}
-            
             {% else %}
             <div class="text-center py-5">
                 <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
-                <h4 class="text-muted">No notifications yet</h4>
-                <p class="text-muted">You'll see notifications here when organizers send updates about tours.</p>
-                <a href="{% url 'tour_list' %}" class="btn btn-primary">
-                    <i class="fas fa-map-marked-alt me-2"></i>Browse Tours
-                </a>
+                <h4 class="text-muted">No notifications</h4>
+                <p class="text-muted">You'll see notifications here when organizers send updates.</p>
             </div>
             {% endif %}
         </div>
@@ -135,51 +83,9 @@ function markAsRead(notificationId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Reload the page to update the UI
             location.reload();
-        } else {
-            alert('Error marking notification as read');
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error marking notification as read');
     });
 }
-
-// Auto-refresh notification count in navbar
-function updateNavbarNotificationCount() {
-    fetch('/notifications/unread-count/')
-        .then(response => response.json())
-        .then(data => {
-            const badge = document.getElementById('notificationBadge');
-            if (data.unread_count > 0) {
-                badge.textContent = data.unread_count;
-                badge.style.display = 'block';
-            } else {
-                badge.style.display = 'none';
-            }
-        });
-}
-
-// Update count when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    updateNavbarNotificationCount();
-});
 </script>
-
-<style>
-.list-group-item {
-    transition: all 0.3s ease;
-}
-
-.list-group-item:hover {
-    background-color: #f8f9fa !important;
-    transform: translateX(5px);
-}
-
-.border-start {
-    border-left-width: 4px !important;
-}
-</style>
 {% endblock %}
