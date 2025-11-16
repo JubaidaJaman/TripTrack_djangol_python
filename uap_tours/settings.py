@@ -1,4 +1,4 @@
-# uap_tours/settings.py
+# triptrack/settings.py
 import os
 from pathlib import Path
 

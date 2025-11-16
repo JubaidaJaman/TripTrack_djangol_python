@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-phone-alt text-danger me-2"></i>Emergency Contacts</h2>
+                <a href="{% url 'add_emergency_contact' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Add Contact
+                </a>
+            </div>
+
+            <!-- Primary Contact Card -->
+            {% if primary_contact %}
+            <div class="card border-success mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-star me-2"></i>Primary Emergency Contact</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4>{{ primary_contact.full_name }}</h4>
+                            <p class="mb-1">
+                                <strong>Relationship:</strong> 
+                                <span class="badge bg-info">{{ primary_contact.get_relationship_display }}</span>
+                            </p>
+                            <p class="mb-1"><strong>Phone:</strong> {{ primary_contact.phone }}</p>
+                            {% if primary_contact.email %}
+                            <p class="mb-1"><strong>Email:</strong> {{ primary_contact.email }}</p>
+                            {% endif %}
+                            {% if primary_contact.address %}
+                            <p class="mb-1"><strong>Address:</strong> {{ primary_contact.address }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group">
+                                <a href="{% url 'edit_emergency_contact' primary_contact.id %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="{% url 'delete_emergency_contact' primary_contact.id %}" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>No primary emergency contact set!</strong> Please set a primary contact for emergencies.
+            </div>
+            {% endif %}
+
+            <!-- Other Contacts -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>All Emergency Contacts</h5>
+                </div>
+                <div class="card-body">
+                    {% if contacts %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Relationship</th>
+                                    <th>Phone</th>
+                                    <th>Email</th>
+                                    <th>Primary</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for contact in contacts %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ contact.full_name }}</strong>
+                                        {% if contact.is_primary %}
+                                        <span class="badge bg-success ms-2">Primary</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ contact.get_relationship_display }}</td>
+                                    <td>{{ contact.phone }}</td>
+                                    <td>{{ contact.email|default:"-" }}</td>
+                                    <td>
+                                        {% if contact.is_primary %}
+                                        <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                        <a href="{% url 'set_primary_contact' contact.id %}" class="btn btn-outline-success btn-sm">
+                                            Set Primary
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'edit_emergency_contact' contact.id %}" class="btn btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'delete_emergency_contact' contact.id %}" class="btn btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-address-book fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No emergency contacts</h4>
+                        <p class="text-muted">Add your emergency contacts for safety during tours.</p>
+                        <a href="{% url 'add_emergency_contact' %}" class="btn btn-primary">Add First Contact</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Emergency Instructions -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Emergency Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>In Case of Emergency:</h6>
+                            <ul>
+                                <li>Stay calm and assess the situation</li>
+                                <li>Contact your primary emergency contact immediately</li>
+                                <li>Inform tour organizer about the situation</li>
+                                <li>Call local emergency services if needed</li>
+                                <li>Follow safety protocols provided by the organizer</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Important Numbers:</h6>
+                            <ul>
+                                <li><strong>Police:</strong> 999</li>
+                                <li><strong>Ambulance:</strong> 199</li>
+                                <li><strong>Fire Service:</strong> 199</li>
+                                <li><strong>UAP Security:</strong> +880 XXXX-XXXXXX</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

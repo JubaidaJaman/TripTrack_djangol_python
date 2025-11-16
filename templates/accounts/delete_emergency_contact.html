@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0"><i class="fas fa-trash me-2"></i>Delete Emergency Contact</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Warning:</strong> You are about to delete an emergency contact.
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>{{ contact.full_name }}</h5>
+                            <p class="mb-1"><strong>Relationship:</strong> {{ contact.get_relationship_display }}</p>
+                            <p class="mb-1"><strong>Phone:</strong> {{ contact.phone }}</p>
+                            {% if contact.email %}
+                            <p class="mb-1"><strong>Email:</strong> {{ contact.email }}</p>
+                            {% endif %}
+                            {% if contact.is_primary %}
+                            <p class="text-danger"><strong>This is your primary emergency contact!</strong></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'emergency_contacts' %}" class="btn btn-secondary me-md-2">Cancel</a>
+                            <button type="submit" class="btn btn-danger">Delete Contact</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
